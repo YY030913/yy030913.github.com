@@ -47,3 +47,5 @@ social:
 ga:
     id: 83586559 
     host: caoliao
+
+theme: jekyll-theme-cayman
