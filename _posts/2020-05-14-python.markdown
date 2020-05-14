@@ -1,0 +1,32 @@
+---
+layout: post
+title: python
+date: 2020-05-14 11:00:00.000000000 +08:00
+---
+
+#### 关于python的使用心得
+
+这里存放了一些觉得不错的python项目和python的学习到的东西
+
+##### 一些自己认为不错的项目
+> [jumpserver审计4A堡垒机](https://github.com/jumpserver/jumpserver)
+remote App（远程访问控制）
+会话管理
+会话录像
+文件管理
+SSH登陆
+脚本下发
+定时改密计划
+
+##### python命令
+生成: pip freeze > requirements.txt
+导入: pip install -r requirements.txt
+
+
+
+##### 问题
+> Error: pg_config executable not found
+```bash
+brew install postgresql
+echo 'export PATH="postgresql_path/bin:$PATH"' >> ~/.bash_profile
+```

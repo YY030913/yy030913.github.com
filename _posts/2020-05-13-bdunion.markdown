@@ -1,0 +1,4256 @@
+---
+layout: post
+title: bdunion
+date: 2020-05-13 11:00:00.000000000 +08:00
+---
+
+#### bdunion
+
+收录了从基础到项目中遇到，学到的各种知识，是一个未细分的大杂烩
+
+##### win 10 下的Linux
+> 前提要求：
+> If you are using Windows 10 version 1607 or later, win10 1607之后可以使用Linux系统
+
+[参考链接使用](https://docs.microsoft.com/zh-cn/windows/wsl/install-win10?redirectedfrom=MSDN)
+- 使用Linux系统，需要在分发版本中启动
+- cmd中输入bash同样可以启动
+
+**注意:要使用管理员模式的power**
+
+版本查看
+```bash
+$ msconfig->工具->关于windows->启动
+$ cmd->ver
+```
+
+##### make 编译 学习
+
+> “all”—— 这个伪目标是所有目标的目标，其功能一般是编译所有的目标。
+
+> “clean” —— 这个伪目标功能是删除所有被make创建的文件。
+
+> “install” —— 这个伪目标功能是安装已编译好的程序，其实就是把目标执行文件拷贝到指定的目标中去。
+
+> “print” —— 这个伪目标的功能是例出改变过的源文件。
+
+> “tar” —— 这个伪目标功能是把源程序打包备份。也就是一个tar文件。
+
+> “dist” —— 这个伪目标功能是创建一个压缩文件，一般是把tar文件压成Z文件，或是gz文件。
+
+> “TAGS” —— 这个伪目标功能是更新所有的目标，以备完整地重编译使用。
+
+> “check”和“test” —— 这两个伪目标一般用来测试makefile的流程。
+
+##### mac系统信息命令
+
+> sw_vers 获取当前Mac 操作系统 版本号和编译版本号.
+
+> uname 命令能够读取到Mac 操作系统的信息
+`uname -a`
+
+> system_profiler 命令是一个命令行接口 (CLI) 由 System Profiler 应用提供，Mac 内置了该应用。 当你没有权限访问GUI时，可以通过它来读取系统信息。
+
+
+> chown
+```bash
+用户删除后 ls -l显示的用户会变成 501
+修改所有者 chown -R root:rootgroup .
+```
+
+> 网络操作命令
+- networksetup 
+Mac 命令行下查看当前 Wifi网络设备名称
+`networksetup -listallhardwareports`
+或者 使用 ifconfig 查找 Wifi 设备名称
+本人结果如下，可以看到我的 Wifi 设备名称为 en0 后面命令需要该设备名称。
+`eagle@macbook ~  networksetup -listallhardwareports`
+ 
+关闭 Wifi
+`networksetup -setairportpower en0 off`
+启动 Wifi
+`networksetup -setairportpower en0 on`
+扫描附近可用 Wifi热点
+`/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport scan`
+加入 Wifi
+`networksetup -setairportnetwork en0 WIFI_SSID_I_WANT_TO_JOIN WIFI_PASSWORD`
+例如：networksetup -setairportnetwork en0  TP_LINK_110  12345678
+[networksetup 其他用法 参考 Apple 文档 或 直接执行命令 man networksetup](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man8/networksetup.8.html)
+
+
+- netsh 
+在命令提示符模式下，输入命令
+`Netsh wlan show profile name=”热点名字” key=clear`
+例如我输入的是Netsh wlan show profile name=”TSD” key=clear，TSD是我已经连接的WiFi名字~
+回车运行命令，下拉滚动条到“安全设置”处，我们想要的Wi-Fi的密码就在“关键内容”这里啦~
+一个一个看终究还是太麻烦，如果想一步到位，可以
+用下面的命令来显示电脑所有曾经连接过的Wi-Fi密码，命令如下：
+`for /f "skip=9 tokens=1,2 delims=:" %i in ('netsh wlan show profiles') do @echo %j | findstr -i -v echo | netsh wlan show profiles %j key=clear`
+在【关键内容】这里可以看到对应的密码~
+
+
+
+
+> lsof 
+**list opoen file**
+
+```bash
+lsof filename     显示打开filename的所有进程
+lsof -c string    显示command中包含string的进程打开的文件
+lsof -u username  显示user打开的进程打开的文件
+lsof -g gid
+lsof +d /dir      显示目录下被进程打开的文件
+lsof +D /dir      显示目录下被进程打开的文件，搜索目录下所有目录，耗时操作
+lsof -d FD        显示指定文件描述的进程
+lsof -n           不将ip转换为hostname
+lsof -i[46 ipv4或者ipv6] [protocol][@hostname|hostaddr][service /etc/services中service name|port]           显示符合条件的进程
+
+查询当前占用22端口的进程
+lsof -i:22
+
+lsof -i tcp:3306
+ps -eaf | grep mysq*
+
+文件找回【文件使用的进程没有终止】/proc是Linux特有目录
+lsof | grep delete_file_path
+cat /proc/{pid}/fd/2 > /var/log/messages
+Service syslogd restart 系统log服务重启，一般log写入到/var/log
+```
+
+> bash下载文件，并解压缩
+命令行使用：
+`bash download_dataset.sh apple2orange`
+代码：
+```bash
+#!/bin/bash
+# https://github.com/junyanz/CycleGAN/blob/master/datasets/download_dataset.sh
+```
+
+```bash
+FILE=$1
+
+if [[ $FILE != "ae_photos" && $FILE != "apple2orange" && $FILE != "summer2winter_yosemite" &&  $FILE != "horse2zebra" && $FILE != "monet2photo" && $FILE != "cezanne2photo" && $FILE != "ukiyoe2photo" && $FILE != "vangogh2photo" && $FILE != "maps" && $FILE != "cityscapes" && $FILE != "facades" && $FILE != "iphone2dslr_flower" && $FILE != "ae_photos" ]]; then
+    echo "Available datasets are: apple2orange, summer2winter_yosemite, horse2zebra, monet2photo, cezanne2photo, ukiyoe2photo, vangogh2photo, maps, cityscapes, facades, iphone2dslr_flower, ae_photos"
+    exit 1
+fi
+
+URL=https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/$FILE.zip
+ZIP_FILE=./data/$FILE.zip
+TARGET_DIR=./data/$FILE/
+wget -N $URL -O $ZIP_FILE
+mkdir -p $TARGET_DIR
+unzip $ZIP_FILE -d ./data/
+rm $ZIP_FILE
+```
+
+> ls
+
+过滤时间为"12 18 16:22"的所有文件，使用awk提取出第九列的内容合并起来%s后边跟的空格不能缺少，否则合并出来的所有文件名都会连接到一起无法删除，通过通道xargs调用rm命令删除
+awk原理类似 rm-r a a.txt b b.jpg...
+```bash
+ls -l | grep "12 18 16:22" | awk '{printf "%s ", $9}' | xargs rm -r
+ls -t 显示根据时间排序
+ls -l 显示所有信息
+ls -l -rt 按时间排序 
+ls -l -Sh 按大小排序 
+
+即可按时间排序当前目录下的文件。
+
+附，ls命令的参数中文详解：
+-a 列出目录下的所有文件，包括以 . 开头的隐含文件。
+-b 把文件名中不可输出的字符用反斜杠加字符编号(就象在C语言里一样)的形式列出。
+-c 输出文件的 i 节点的修改时间，并以此排序。
+-d 将目录象文件一样显示，而不是显示其下的文件。
+-e 输出时间的全部信息，而不是输出简略信息。
+-f -U 对输出的文件不排序。
+-g 无用。
+-i 输出文件的 i 节点的索引信息。
+-k 以 k 字节的形式表示文件的大小。
+-l 列出文件的详细信息。
+-m 横向输出文件名，并以“，”作分格符。
+-n 用数字的 UID,GID 代替名称。
+-o 显示文件的除组信息外的详细信息。
+-p -F 在每个文件名后附上一个字符以说明该文件的类型，“*”表示可执行的普通文件；“/”表示目录；“@”表示符号链接；“|”表示FIFOs；“=”表示套接字(sockets)。
+-q 用?代替不可输出的字符。
+-r 对目录反向排序。
+-s 在每个文件名后输出该文件的大小。
+-t 以时间排序。
+-u 以文件上次被访问的时间排序。
+-x 按列输出，横向排序。
+-A 显示除 “.”和“..”外的所有文件。
+-B 不输出以 “~”结尾的备份文件。
+-C 按列输出，纵向排序。
+-G 输出文件的组的信息。
+-L 列出链接文件名而不是链接到的文件。
+-N 不限制文件长度。
+-Q 把输出的文件名用双引号括起来。
+-R 列出所有子目录下的文件。
+-S 以文件大小排序。
+-X 以文件的扩展名(最后一个 . 后的字符)排序。
+-1 一行只输出一个文件。
+
+ls实现列文件按时间排序
+
+1) ls -lt  时间最近的在前面
+2) ls -ltr 时间从前到后
+
+3) 利用sort
+
+ls -l | sort +7 (日期为第8列)  时间从前到后
+ls -l | sort -r +7 时间最近的在前面
+
+
+重复执行上次操作的命令语法
+!! 
+```
+
+
+> ln 软链接
+```bash
+ln -s file link 创建链接
+rm link -f 删除链接
+```
+
+
+> ps
+
+```bash
+批量杀死进程
+ps -ef|grep wget|grep -v  grep|awk '{print $2}'|xargs kill -9
+
+```
+
+> history 历史命令
+
+```bash
+history命令清除命令执行操作的历史记录
+history -c  
+history命令列出最近执行的n条命令
+history 10 
+
+查看histroy文件
+cat ~/.bash_histroy
+
+#设置历史命令记录数  
+export HISTSIZE=1000  
+#记录历史文件大小   
+export HISTFILESIZE=450 
+
+export HISTFILE=~/.commandline_warrior 
+
+export HISTTIMEFORMAT="%Y-%M-%D %H:%M:%S  " 
+```
+
+> iptables ip表防火墙
+首先要看一下iptables是否安装了,使用service iptables status或yum info iptables看一下当前状态
+如果已安装，运行以下命令：
+```bash
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+service iptables save
+
+iptables -L -n
+查看本机关于IPTABLES的设置情况
+```
+
+这样就会提示
+`iptables: Saving firewall rules to /etc/sysconfig/iptables:[ OK ]`
+
+这样就会有iptables的初始配置文件了
+
+否则：
+```bash
+yum install iptables
+```
+
+问题：
+```bash
+service iptables status
+Unit iptables.service failed to load: No such file or directory.
+```
+方法1:
+在CentOS 7或RHEL 7或Fedora中防火墙由firewalld来管理，
+如果要添加范围例外端口 如 1000-2000
+语法命令如下：启用区域端口和协议组合
+`firewall-cmd [--zone=<zone>] --add-port=<port>[-<port>]/<protocol> [--timeout=<seconds>]`
+此举将启用端口和协议的组合。端口可以是一个单独的端口 <port> 或者是一个端口范围 <port>-<port> 。协议可以是 tcp 或 udp。
+实际命令如下：
+
+添加
+```bash
+firewall-cmd --zone=public --add-port=80/tcp --permanent （--permanent永久生效，没有此参数重启后失效）
+firewall-cmd --zone=public --add-port=1000-2000/tcp --permanent 
+
+重新载入
+firewall-cmd --reload
+查看
+firewall-cmd --zone=public --query-port=80/tcp
+删除
+firewall-cmd --zone=public --remove-port=80/tcp --permanent
+```
+
+方法2:还原传统的管理方式。
+```bash
+systemctl stop firewalld  
+systemctl mask firewalld  
+并且安装iptables-services：
+yum install iptables-services  
+设置开机启动：
+systemctl enable iptables  
+systemctl stop iptables  
+systemctl start iptables  
+systemctl restart iptables  
+systemctl reload iptables  
+
+保存设置：
+service iptables save  
+```
+
+> zip 压缩
+```bash
+-q ：不显示压缩进度状态
+-r ：子目录子文件全部压缩为zip  //不然的话只有"zipfile list''文件夹被压缩，里面内容没有被压缩进去
+-e ：压缩文件需要加密，终端会提示你输入密码的 //zip -r -P test password.zip "zipfile list'' 直接用'test'来加密password.zip 。
+-m ：压缩完删除原文件
+-o ：设置所有被压缩文件的最后修改时间为当前压缩时间
+
+zip -q -r -m -o '买家应用.zip' 买家应用.pptx 
+```
+
+> unzip 解压缩
+```bash
+-x ：文件列表解解压缩文件，但不包括指定的file文件。 
+-v ：查看压缩文件目录，但不解压。 
+-t ：测试文件有无损坏，但不解压。 
+-d ：目录 把压缩文件解到指定目录下。 
+-z ：只显示压缩文件的注解。 
+-n ：不覆盖已经存在的文件。 
+-o ：覆盖已存在的文件且不要求用户确认。 
+-j ：不重建文档的目录结构，把所有文件解压到同一目录下。 
+
+unzip text.zip   
+
+```
+
+> unrar解压
+```bash
+unrar e bb5774.rar
+```
+
+> tar打包与解包
+```bash
+-b : 为一数字，每个I / O块使用＃字节的记录，默认512
+-f ：存档位置
+-v ：细报告tar处理的文件信息。如无此选项，tar不报告文件信息。 
+-w ：每一步都要求确认
+-k：保存已存在的文件不覆盖
+-m ：还原文件时，把所有文件的修改时间设定为现在
+-O ：将条目标准输出，不还原到磁盘
+-p：恢复权限（包括ACL，作者，文件标记）
+
+把/home目录下包括它的子目录全部打包，打包文件名为usr.tar。 
+tar cvf usr.tar /home 
+
+把压缩文件usr.tar.gz还原并解包。 
+tar xzvf usr.tar.gz 
+```
+
+> find
+
+```bash
+find . -name "thread-108*" | xargs  -I  '{}'  mv  {}  /Volumes/My\ Passport/jav8
+
+find . -name "*.gif" | xargs rm -f 
+
+find ./ -size 0 | xargs rm -f 
+
+find ./ -size -100k | xargs rm -f
+
+find ./ -size +100k | xargs rm -f
+
+find nPackages/ -name "node_modules" -type d | xargs rm -rf删除nPackages目录下所有node_modules文件夹
+find ~ -name ".bash_*" -type f 查看所有.bash_开头的文件
+
+find .  -type f  |  xargs  -I  '{}'  mv  {}  /opt/shell
+
+find . -name "strapi.js" | xargs -I '{}' mv {} caoliao.js 
+
+
+brew install rename
+find . -name "*.sh" -exec rename .sh .shell {} \;
+
+find . -name "strapi.js"|xargs  rename 's/strapi/caoliao/' *.js
+’ic_‘改为’ic_setting_’ :
+find . -name "strapi.js"|xargs  rename 's/ic_/ic_setting_/' *.png 
+```
+
+> rm 删除
+```bash
+命令行 开启扩展通配符
+shopt -s  extglob
+查看是否开启
+shopt -s
+在test文件夹下有1.tt、1.png、index.html，现在要删除除1.tt之外的所有文件，则可以执行如下命令
+
+rm -rf !(1.tt)
+或者 
+find . -not -name "1.tt" -exec rm -rf {} \;
+或者
+find . -not -name "1.tt" | xargs rm -rf
+或者
+for i in `ls`;do if [ "$i" != 1.tt ];then rm -rf $i;fi;done;
+
+```
+
+> ${} 变量操作符 
+**shell提取文件名和目录名**
+```bash
+#从左匹配字符/
+%从右匹配字符/
+
+var=/dir1/dir2/file.txt  
+filename=${var##*/} => file.txt
+extend=${var##*.} => txt
+后缀不仅有一个
+var=/dir1/dir2/file.tar.gz
+fullextend=${var#*.} => tar.gz
+dirname=${var%/*} => /dir1/dir2
+
+https://blog.csdn.net/universe_hao/article/details/52640321
+```
+
+> who 查询登陆账户
+
+
+who命令查询utmp文件并报告当前登录的每个用户
+Who的缺省输出包括用户名、终端类型、登录日期及远程主机
+如果指明了wtmp文件名，则who命令查询以前所有的登陆纪录。使用命令
+```bash
+who /var/log/wtmp
+```
+
+**网站clone**
+
+> httrack
+同样可以进行线下线上站点同步，支持断点续传
+`brew install httrack`
+```bash
+# 1. 输入待生成的项目名称
+# 2. 输入待保存的项目所在的路径
+# 3. 输入需要克隆的网站的 url
+# 4. 选择clone方式
+# 5. 没有特别要求直接回车即可
+Enter project name :android
+
+Base path (return=/Users/xiaoyu/websites/) :/Volumes/My Passport/site
+
+Enter URLs (separated by commas or blank spaces) :https://developer.android.google.cn/
+
+Action:
+(enter) 1   Mirror Web Site(s)
+    2   Mirror Web Site(s) with Wizard
+    3   Just Get Files Indicated
+    4   Mirror ALL links in URLs (Multiple Mirror)
+    5   Test Links In URLs (Bookmark Test)
+    0   Quit
+: 4
+```
+
+> curl
+
+```bash
+curl -H "x-auth-token:03g1QXWkLsl9_VeoZRIB12vyHg6yG6Pa8D2KVmQbTwg" -H "x-user-id:aFzX5DRQE5Lxg7Qcm" -F "image=/Users/zhangshuai/meteor/caoliao.git/public/app_logo.png.jpg" http://localhost:3000/api/v1/users.setAvatar
+
+
+curl -H "x-auth-token: Oy2E2T8Pkkm2-vF65vOchCQkHayHrQX7TYRxJQDCfdP" -H "x-user-id: 8MHmiDBEfktYEogvN" -F "image=/Users/zhangshuai/meteor/caoliao.git/public/app_logo.png" http://127.0.0.1:3000/api/v1/users.setAvatar
+
+
+curl --data "email=1034709616@qq.com&password=12345678A" http://127.0.0.1:3000/api/v1/login
+
+```
+
+> wget
+
+```bash
+wget 模拟登录抓取整站
+wget -c -r -npH -k -d --header="cookie:cna=IJRLE5BAAVgCATtsNYYYuYhp;" https://h5.m.taobao.com/alicare/alicarePC.html
+
+wget -r -p -np -k
+
+启动参数：
+
+-V, –version 显示wget的版本后退出
+
+-h, –help 打印语法帮助
+
+-b, –background 启动后转入后台执行
+
+-e, –execute=COMMAND 执行`.wgetrc’格式的命令，wgetrc格式参见/etc/wgetrc或~/.wgetrc
+
+记录和输入文件参数：
+
+-o, –output-file=FILE 把记录写到FILE文件中
+
+-a, –append-output=FILE 把记录追加到FILE文件中
+
+-d, –debug 打印调试输出
+
+-q, –quiet 安静模式(没有输出)
+
+-v, –verbose 冗长模式(这是缺省设置)
+
+-nv, –non-verbose 关掉冗长模式，但不是安静模式
+
+-i, –input-file=FILE 下载在FILE文件中出现的URLs
+
+-F, –force-html 把输入文件当作HTML格式文件对待
+
+-B, –base=URL 将URL作为在-F -i参数指定的文件中出现的相对链接的前缀
+
+–sslcertfile=FILE 可选客户端证书
+
+–sslcertkey=KEYFILE 可选客户端证书的KEYFILE
+
+–egd-file=FILE 指定EGD socket的文件名
+
+下载参数：
+
+–bind-address=ADDRESS 指定本地使用地址(主机名或IP，当本地有多个IP或名字时使用)
+
+-t, –tries=NUMBER 设定最大尝试链接次数(0 表示无限制).
+
+-O –output-document=FILE 把文档写到FILE文件中
+
+-nc, –no-clobber 不要覆盖存在的文件或使用.#前缀
+
+-c, –continue 接着下载没下载完的文件(断点下载)
+
+–progress=TYPE 设定进程条标记
+
+-N, –timestamping 不要重新下载文件除非比本地文件新
+
+-S, –server-response 打印服务器的回应
+
+–spider 不下载任何东西
+
+-T, –timeout=SECONDS 设定响应超时的秒数
+
+-w, –wait=SECONDS 两次尝试之间间隔SECONDS秒
+
+–waitretry=SECONDS 在重新链接之间等待1…SECONDS秒
+
+–random-wait 在下载之间等待0…2*WAIT秒
+
+-Y, –proxy=on/off 打开或关闭代理
+
+-Q, –quota=NUMBER 设置下载的容量限制
+
+–limit-rate=RATE 限定下载输率
+
+目录参数：
+
+-nd –no-directories 不创建目录
+
+-x, –force-directories 强制创建目录
+
+-nH, –no-host-directories 不创建主机目录
+
+-P, –directory-prefix=PREFIX 将文件保存到目录 PREFIX/…
+
+–cut-dirs=NUMBER 忽略 NUMBER层远程目录
+
+HTTP 选项参数：
+
+–http-user=USER 设定HTTP用户名为 USER.
+
+–http-passwd=PASS 设定http密码为 PASS
+
+-C, –cache=on/off 允许/不允许服务器端的数据缓存 (一般情况下允许)
+
+-E, –html-extension 将所有text/html文档以.html扩展名保存
+
+–ignore-length 忽略 `Content-Length’头域
+
+–header=STRING 在headers中插入字符串 STRING
+
+–proxy-user=USER 设定代理的用户名为 USER
+
+–proxy-passwd=PASS 设定代理的密码为 PASS
+
+–referer=URL 在HTTP请求中包含 `Referer: URL’头
+
+-s, –save-headers 保存HTTP头到文件
+
+-U, –user-agent=AGENT 设定代理的名称为 AGENT而不是 Wget/VERSION
+
+–no-http-keep-alive 关闭 HTTP活动链接 (永远链接)
+
+–cookies=off 不使用 cookies
+
+–load-cookies=FILE 在开始会话前从文件 FILE中加载cookie
+
+–save-cookies=FILE 在会话结束后将 cookies保存到 FILE文件中
+
+FTP 选项参数：
+
+-nr, –dont-remove-listing 不移走 `.listing’文件
+
+-g, –glob=on/off 打开或关闭文件名的 globbing机制
+
+–passive-ftp 使用被动传输模式 (缺省值).
+
+–active-ftp 使用主动传输模式
+
+–retr-symlinks 在递归的时候，将链接指向文件(而不是目录)
+
+递归下载参数：
+
+-r, –recursive 递归下载－－慎用!
+
+-l, –level=NUMBER 最大递归深度 (inf 或 0 代表无穷)
+
+–delete-after 在现在完毕后局部删除文件
+
+-k, –convert-links 转换非相对链接为相对链接
+
+-K, –backup-converted 在转换文件X之前，将之备份为 X.orig
+
+-m, –mirror 等价于 -r -N -l inf -nr
+
+-p, –page-requisites 下载显示HTML文件的所有图片
+
+递归下载中的包含和不包含(accept/reject)：
+
+-A, –accept=LIST 分号分隔的被接受扩展名的列表
+
+-R, –reject=LIST 分号分隔的不被接受的扩展名的列表
+
+-D, –domains=LIST 分号分隔的被接受域的列表
+
+–exclude-domains=LIST 分号分隔的不被接受的域的列表
+
+–follow-ftp 跟踪HTML文档中的FTP链接
+
+–follow-tags=LIST 分号分隔的被跟踪的HTML标签的列表
+
+-G, –ignore-tags=LIST 分号分隔的被忽略的HTML标签的列表
+
+-H, –span-hosts 当递归时转到外部主机
+
+-L, –relative 仅仅跟踪相对链接
+
+-I, –include-directories=LIST 允许目录的列表
+
+-X, –exclude-directories=LIST 不被包含目录的列表
+
+-np, –no-parent 不要追溯到父目录
+
+wget -S –spider url 不下载只显示过程
+```
+
+
+> scp
+
+```bash
+scp -C -i "~/Public/caoliao" caoliao root@115.159.3.160:/home/nginx/.ssh
+scp -C -i "~/Public/caoliao" suning-512882.txt root@115.159.3.160:/opt/nginx/html/
+root.txt 
+
+scp -C -i "~/Public/caoliao" nginx.conf root@115.159.3.160:/opt/nginx/conf/nginx.conf
+igtest  
+scp -C root@115.159.3.160:/usr/local/*.tgz c:\download(mac ~/meteor)
+```
+
+**内网穿透**
+
+> frp
+```bash
+frps.ini
+
+[common]
+bind_port = 1990
+vhost_http_port = 1991
+
+[web]
+type = http
+custom_domains = frp.caoliao.net.cn
+
+命令 ：./frps -c ./frps.ini
+frpc.ini
+[common]
+server_addr = 115.159.3.160
+server_port = 1990
+
+[web]
+type = http
+local_port = 3000
+
+命令： ./frpc -c ./frpc.ini
+
+scp 上传
+nginx 开放端口
+iptables开放端口
+screen 中启动
+（先开放再启动，否则nginx会报错，端口占用）
+```
+
+> screen 
+```bash
+screen -r (attached)
+(异常退出 screen 为 detached) screen -D  -r ＜session-id>
+ctrl + a + d 从attached的screen中退出
+```
+
+> ssh
+```bash
+ssh命令链接
+http://www.berlinix.com/it/ssh.php
+
+
+ssh端口转发视频
+http://www.soku.com/search_video/q_ssh%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91?spm=a2hww.20027244.#qheader_search~10
+
+映射本地端口27027到远程服务器115.159.3.160
+    
+C表示压缩数据传输 
+f表示后台用户验证,这个选项很有用,没有shell的不可登陆账号也能使用. 
+N表示不执行脚本或命令 
+g表示允许远程主机连接转发端口 
+
+2) -L 本地转发 
+# ssh -CfNg -L 27027:127.0.0.1:27017 root@115.159.3.160
+本机(运行这条命令的主机)打开6300端口, 通过加密隧道映射到远程主机172.16.1.164的1521端口(使用远程主机oracle用户). 在本机上用netstat -an|grep 6300可看到. 简单说,本机的6300端口就是远程主机172.16.1.164的1521端口. 
+
+3) -R 远程转发 
+服务器
+netstat -tunlp|grep 端口号
+关闭进程
+
+ss -ntl 查看端口开放情况
+当没有1900端口时
+回到客户端
+先启动本地3000 在运行命令
+ssh -CfNg -R 1990:127.0.0.1:3000 root@115.159.3.160 -i "~/Public/caoliao"
+
+作用同上, 只是在远程主机172.16.1.164上打开1521端口, 来映射本机的6300端口. 
+
+ps aux | grep ssh
+查看是否影射成功
+
+
+
+指定登陆用户
+ssh -l root 192.168.0.103
+ssh leni@192.168.0.0103
+
+指定端口
+要改变端口号，我们需要修改 /etc/ssh/ssh_config 文件，找到此行：
+Port 22
+把它换成其他的端口号，比如上面示例的 1234 端口，然后重启 SSH 服务。
+ssh 192.168.0.103 -p 1234
+
+对所有数据请求压缩
+ssh -C 192.168.0.103
+
+
+指定一个加密算法
+SSH 提供了一些可用的加密算法。可以在 */etc/ssh/ssh_config or ~/.ssh/config * 文件中看到（如果存在的话）。
+默认的，SSH 会使用 3des 算法。
+让我们试试比如你想使用 blowfish 算法来加密你的 SSH 会话，那么你只要把这一行加入你的/etc/ssh/ssh_config or ~/.ssh/config 文件就可以：
+Cipher blowfish
+
+打开调试模式
+因为某些原因，我们想要追踪调试我们建立的 SSH 连接情况。SSH 提供的 -v 选项参数正是为此而设的。
+ssh -v 192.168.0.103
+
+绑定源地址
+如果你的客户端有多于两个以上的 IP 地址，你就不可能分得清楚在使用哪一个 IP 连接到 SSH 服务器。多网卡
+为了解决这种情况，我们可以使用 -b 选项来指定一个IP 地址。这个 IP 将会被使用做建立连接的源地址。
+ssh -b 192.168.0.200 -l leni 192.168.0.103
+
+使用其他配置文件
+ssh -F /home/pungki/my_ssh_config 192.168.0.101
+```
+
+
+##### mac命令行hostname变成bogon
+
+更新python3时看到ipv6，然后我的terminal变为bogon
+bogon是谁，难道有人动了我的电脑，我很清楚的记得我本地hostname="dangchujiubugaixiafan,s MacBook Pro ",突然出现boson让我很好奇，当然也没人来动我电脑，更不可能是黑客了。
+
+经过一番search，造成terminal显示的hostname变为bogon的原因有两点：
+
+terminal显示hostname之前会先根据本机IP做一次rDNS反向查询，就是通过ip地址查询hostname，过程与DNS类似。rDNS反向查询常用在traceroute以及反垃圾邮件技术中,terminal显示查询到的hostname，如果没有查询到，那么使用本机设置的hostname。本机IP通常是局域网IP地址（保留IP地址），一般是查不到的，所以terminal一般显示的本机设置的hostname，比如dangchujiubugaixiafan's-macbook。
+上面提到，局域网IP地址一般是查不到hostname，是因为ISP提供商或者用户防火窗的屏蔽保留IP地址，因为保留IP地址在公网中没啥用，即便是没有被屏蔽掉，rDNS服务器一般也会关闭响应保留IP地址的查询请求。凡事都有例外，rDNS服务器对这种保留IP地址对查询一律返回bogon。在ipv4对地址划分中，除了公网分配在用对IP地址外，其余保留IP地址统一叫做bogon space。
+
+- 一：解决办法1
+设置路由器的DNS服务器地址，8.8.8.8和8.8.4.4。然后重启terminal。
+
+
+补充：如果修改不了DNS服务器，那么直接修改Hostname即可
+
+- 二：解决办法2
+Unix 的命令行是强大的，因此，主机名与计算机名的修改也可以通过命令行修改
+
+使用命令如下
+```bash
+$ sudo scutil --set ComputerName 你想要的计算机名称
+$ sudo scutil --set HostName 你想要的主机名称
+1.首先使用命令查看，本地计算机名，和主机名。
+$ scutil --get ComputerName
+$ scutil --get HostName
+```
+
+```bash
+sudo hostname st
+sudo scutil --set LocalHostName st
+sudo scutil --set HostName st
+```
+
+[举一反三](https://blog.csdn.net/yangyangzhang1990/article/details/45868337)
+
+##### mac系统的文件夹隐藏和显示
+
+隐藏文件夹：
+`chflags hidden Downloads/秘密/*`
+显示文件夹：
+`chflags nohidden 文件夹路径`
+
+文件夹应用 显示/隐藏
+```bash
+defaults write com.apple.finder AppleShowAllFiles TRUE
+killall Finder
+```
+
+快捷键
+`Shift + Command + . `
+
+##### diskutil
+
+罗列所有磁盘
+`diskutil list`
+
+擦出并转换ExFAT格式
+`sudo diskutil eraseVolume free free disk3s1`
+
+重命名
+`diskutil rename "My Passport" "MyPassport"`
+
+##### diskutil mount 支持ntfs 命令
+
++ 检查：
+ 	* 1) 先使用diskutil list 查看自己宗卷名字 我的是Netac 对应的是/dev/disk2
+查看具体情况
+	* 2）diskutil info /dev/disk2
++ 加载：
+	* 1)然后输入 sudo diskutil mount /dev/disk2 想手动装载吧 Volume on disk2 failed to mount; if it has a partitioning scheme, use "diskutil mountDisk" If the volume is damaged, try the "readOnly" option
+	* 2) sudo diskutil mountDisk /dev/disk2
++ 卸载：
+	* 1）diskutil unmountDisk /dev/disk2(弹出)
+	* 2）diskutil eject /dev/disk2
+
+> 问题：
+有失败的地方尝试检查fsck是否有启动
+然后 输入 `ps aux | grep fsck` 确实fsck在搞鬼
+
+然后杀掉所有fsck的进程 `sudo pkill -f fsck `
+
+
+> 挂在ntfs:ntfs 自动加载
+```bash
+mount_ntfs -o rw,auto,nobrowse,noowners,noatime  "${mount_path}" "${link_path}"
+await execShell(`umount "${mount_path}"`);
+await execShell(`mkdir -p "${link_path}"`);
+await execShell(`mount_ntfs -o rw,auto,nobrowse,noowners,noatime  "${mount_path}" "${link_path}"`);
+```
+
+##### yii项目 启动
+
+```bash
+cd yii/framework
+./yiic webapp ../生成目录
+```
+访问链接 host:port/app/yii/生成目录
+
+##### mac studio过期操作
+
+2019-10-15 22 more days
+
+##### mac清理
+```bash
+mac       == win
+rm -rf ./ == rd /S ./
+rm .      == del .
+rmdir [drive:]path [/S] [/Q]
+del [drive:]path [/S] [/Q]
+```
+其中rmdir 与rd命令相同。
+```bash
+/S 表示除目录本身外，还将删除指定目录下的所有子目录和文件。
+/Q 表示安静模式，删除时不需要经过确认。
+```
+
+如删除 D:\temp\目录下的所有文件的写法如下：
+```bash
+rmdir d:\temp\ /S /Q
+del d:\temp\ /S /Q
+```
+推荐使用rmdir 命令，批量删除大量文件时比del 更高效快速。
+
+
+
+批量删除当前路径下后缀为 .jpg和 .json
+`del /a /f /s /q  "*.jpg" "*.json"`
+
+```bash
+*为通配符 
+/a /f 是强制删除所有属性的文件 
+/q是无需确认直接删除 
+要是再加上/s开关，就可以删除子文件加中的文件
+```
+
+防止OS X继续创建该文件，所以我们需要下面的命令生成一个无法被替换的空文件
+```bash
+touch sleepimage
+chmod 000 /private/var/vm/sleepimage
+```
+
+如果你想要重新开启SafeSleep功能，只需下面的命令即可。
+```bash
+sudo pmset -a hibernatemode 3
+sudo rm /private/var/vm/sleepimage
+```
+
+移除系统嗓音文件—如果你不适用文字转语音功能，那么你肯定不会使用到OS X内置的嗓音文件（如果你执行了命令，那么你将无法使用系统的文字转语音功能。）
+```bash
+cd /System/Library/Speech/
+sudo rm -rf Voices/*
+```
+删除所有系统日志—系统日志文件会不断的产生，所以你可以定时执行这条命令。
+```bash
+sudo rm -rf /private/var/log/*
+```
+删除快速查看生成的缓存文件—快速查看功能是OS X系统内置的文件预览功能，在Finder中选择任何文件后都可以点击空格来查看文件的详情
+```bash
+sudo rm -rf /private/var/folders/
+```
+删除Emacs-Emacs是终端中的文本编辑器
+```bash
+sudo rm -rf /usr/share/emacs/
+```
+删除临时文件—/private/var/tmp/是存放系统缓存的文件夹，通常情况下会在系统重启时清楚，不过有时确不会。
+```bash
+cd /private/var/tmp/
+rm -rf TM*
+```
+清除缓存文件—缓存文件有很多种，比如网页浏览记录，应用meta数据等等。
+
+```bash
+cd ~/Library/Caches/
+rm -rf ~/Library/Caches/*
+rm -rf /Library/Application\ Support/GarageBand
+rm -rf /Library/Application\ Support/Logic
+rm -rf /Library/Audio/Apple\ Loops
+```
+
+其中，我们很容易能看到每个文件的大小占比
+
+```bash
+du -sh *
+```
+
+他会列出所有目录超过1G的文件夹,然后你逐个分析就可以了. 看看哪些文件夹不应该那么大
+
+```bash
+cd /
+du -hd 5 |grep -n '\dG' |sort
+```
+
+终端命令历史就被清除
+由于你的命令历史是存储在~/.bash_history这个文件上的，所以你可以直接编辑这个文件，将里面的东西删除掉即可。
+```bash
+history -c
+```
+
+
+##### diskutil
+
+罗列所有磁盘
+`diskutil list`
+
+擦出并转换ExFAT格式
+`sudo diskutil eraseVolume free free disk3s1`
+
+重命名
+`diskutil rename "My Passport" "MyPassport"`
+
+
+##### meteor
+
+`curl https://install.meteor.com/ | sh`
+
+> 所有可以使用的meteor命令
+```bash
+meteor/tools/cli
+
+如 commands-aliases.js中meteor dbconsole 会输出一个温馨提示你是不是要找meteor mongo
+```
+
+```bash
+process.env.
+ROOT_URL=https://caoliao.net.cn
+MONGO_URL=mongodb://127.0.0.1:27017/caoliao
+MONGO_OPLOG_URL=xxxx
+METEOR_NO_RELEASE_CHECK=true
+
+MOBILE_DDP_URL=xxx
+MOBILE_ROOT_URL=xxx
+
+METEOR_SETTINGS=seting.file
+```
+
+> meteor run启动参数
+```bash
+meteor启动参数 参照 meteor/tools/cli/commands.js runCommandOptions
+option
+--production true
+--settings setting.file(s)
+--once 只运行一次
+--port 3000(p)
+--mobile-server https://xxx
+--mobile-port 3000
+--app-port 3000
+--debug-port 3000
+--no-release-check true
+--raw-logs true 
+--verbose true(v)
+--no-lint true
+--allow-incompatible-update true
+--extra-packages xxx
+--inspect xxx[9229]
+--inspect-brk xxx[9229]
+```
+
+> meteor 问题
+```bash
+W20180916-15:35:53.421(8)? (STDERR) Compiling undefined with meteor-babel without a cache
+W20180916-15:35:53.587(8)? (STDERR) [object Object]
+W20180916-15:35:53.587(8)? (STDERR)     at Object.exports.compile (/Users/niame/.meteor/packages/babel-compiler/.7.1.1.hl1p3z.92fvk++os+web.browser+web.browser.legacy+web.cordova/npm/node_modules/meteor-babel/index.js:77:13)
+W20180916-15:35:53.587(8)? (STDERR)     at Object.compile (packages/babel-compiler.js:44:29)
+W20180916-15:35:53.588(8)? (STDERR)     at Object.compileForShell (packages/ecmascript/ecmascript.js:7:18)
+W20180916-15:35:53.588(8)? (STDERR)     at REPLServer.wrappedDefaultEval [as eval] (packages/shell-server/shell-server.js:236:48)
+W20180916-15:35:53.588(8)? (STDERR)     at REPLServer.onLine (repl.js:468:10)
+W20180916-15:35:53.588(8)? (STDERR)     at emitOne (events.js:121:20)
+W20180916-15:35:53.589(8)? (STDERR)     at REPLServer.emit (events.js:211:7)
+W20180916-15:35:53.589(8)? (STDERR)     at REPLServer.Interface._onLine (readline.js:280:10)
+W20180916-15:35:53.589(8)? (STDERR)     at REPLServer.Interface._line (readline.js:629:8)
+W20180916-15:35:53.590(8)? (STDERR)     at REPLServer.Interface._ttyWrite (readline.js:910:14)
+W20180916-15:35:53.590(8)? (STDERR)     at REPLServer.self._ttyWrite (repl.js:537:7)
+W20180916-15:35:53.590(8)? (STDERR)     at PassThrough.onkeypress (readline.js:158:10)
+W20180916-15:35:53.591(8)? (STDERR)     at emitTwo (events.js:126:13)
+W20180916-15:35:53.591(8)? (STDERR)     at PassThrough.emit (events.js:214:7)
+W20180916-15:35:53.591(8)? (STDERR)     at emitKeys (internal/readline.js:420:14)
+W20180916-15:35:53.592(8)? (STDERR)     at emitKeys.next (<anonymous>)
+```
+原因：启动meteor之前 ，meteor shell已经启动（上次启动后，在meteor关闭后，meteor shell并没有关闭）
+
+
+
+> 草料项目的meteor命令
+```bash
+115.159.3.160
+npm i && MONGO_URL=mongodb://127.0.0.1:27017/caoliao ROOT_URL=https://caoliao.net.cn  meteor --production --port 3000 > ~/meteor-repo/log
+本地
+MONGO_URL=mongodb://115.159.3.160:27017/caoliao meteor --production --port 9000
+
+
+MONGO_URL=mongodb://127.0.0.1:27017/caoliao ROOT_URL=https://caoliao.net.cn meteor --production --port 3000 --allow-superuser
+OVERWRITE_SETTING_${setting_id} = value覆盖setting models中的value
+等同于 option force
+CaoLiao.settings.addGroup('OAuth', function() {
+    this.section('Wechat', function() {
+        return this.add('Accounts_OAuth_Wechat_callback_url', Meteor.absoluteUrl() + 'api/v1/_oauth/wechat', {
+            type: 'relativeUrl',
+            readonly: true,
+            force: true,
+            enableQuery
+        });
+    });
+```
+> meteor shell 调试
+```bash
+CaoLiao.TaoBao.pub.items({channel: CaoLiao.TaoBao.pub.channels[0],catIds: CaoLiao.TaoBao.pub.catIds[0].key,level: 1,toPage: 1})
+CaoLiao.jd.media.gotoadv(0, CaoLiao.jd.media.cat1[0].key, 1)
+
+w3m http://pub.alimama.com/items/channel/9k9.json
+
+CaoLiao.TaoBao.pub.items({channel: CaoLiao.TaoBao.pub.channels[0],catIds: CaoLiao.TaoBao.pub.catIds[0].key,level: 1,toPage: 1, perPageSize: 50})
+CaoLiao.Baiduyun.listTrends()
+
+CaoLiao.TaoBao.tae.getDetail({item_id: "566378927772"})
+CaoLiao.TaoBao.tae.getList({num_iids: "566378927772,566486340047"})
+    
+CaoLiao.TaoBao.tbk.getItemInfo({"num_iids": ids.join(",")})
+CaoLiao.TaoBao.tbk.getJuTqq({page_no: 1})
+CaoLiao.TaoBao.tbk.getDgItemCoupon({page_no: 1})
+
+CaoLiao.models.Fanli.find().count()
+```
+
+##### docker安装
+
+```bash
+brew cask install docker
+docker国内镜像
+preference -> daemon -> basic -> registry mirror
+https://docker.mirrors.ustc.edu.cn
+https://hub-mirror.c.163.com
+```
+
+##### redis安装
+
+```bash
+brew install redis
+软件的位置
+/usr/local/Cellar/redis
+配置文件位置
+/usr/local/etc/redis.conf
+
+echo 'export PATH="/usr/local/Cellar/redis/5.0.6/bin:$PATH"' >> ~/.bash_profile
+启动server
+cd /usr/local/Cellar/redis/3.0.7/bin
+./redis-server
+配置文件启动
+./redis-server /usr/local/etc/redis.conf
+```
+
+```bash
+brew search redis
+brew install redis@3.2
+
+echo 'export PATH="/usr/local/opt/redis@3.2/bin:$PATH"' >> ~/.bash_profile
+source ~/.bash_profile
+
+启动redis服务：
+brew services start redis@3.2
+
+brew services list
+看到redis的状态为started。
+
+连接到本地的redis-server:
+redis-server -h 127.0.0.1
+
+启动失败：
+vi /etc/redis.conf 
+
+添加下列内容
+    
+
+# redis 配置文件示例
+ 
+# 当你需要为某个配置项指定内存大小的时候，必须要带上单位，
+# 通常的格式就是 1k 5gb 4m 等酱紫：
+#
+# 1k  => 1000 bytes
+# 1kb => 1024 bytes
+# 1m  => 1000000 bytes
+# 1mb => 1024*1024 bytes
+# 1g  => 1000000000 bytes
+# 1gb => 1024*1024*1024 bytes
+#
+# 单位是不区分大小写的，你写 1K 5GB 4M 也行
+ 
+################################## INCLUDES ###################################
+ 
+# 假如说你有一个可用于所有的 redis server 的标准配置模板，
+# 但针对某些 server 又需要一些个性化的设置，
+# 你可以使用 include 来包含一些其他的配置文件，这对你来说是非常有用的。
+#
+# 但是要注意哦，include 是不能被 config rewrite 命令改写的
+# 由于 redis 总是以最后的加工线作为一个配置指令值，所以你最好是把 include 放在这个文件的最前面，
+# 以避免在运行时覆盖配置的改变，相反，你就把它放在后面（外国人真啰嗦）。
+#
+# include /path/to/local.conf
+# include /path/to/other.conf
+ 
+################################ 常用 #####################################
+ 
+# 默认情况下 redis 不是作为守护进程运行的，如果你想让它在后台运行，你就把它改成 yes。
+# 当redis作为守护进程运行的时候，它会写一个 pid 到 /var/run/redis.pid 文件里面。
+daemonize yes
+ 
+# 当redis作为守护进程运行的时候，它会把 pid 默认写到 /var/run/redis.pid 文件里面，
+# 但是你可以在这里自己制定它的文件位置。
+pidfile /var/run/redis.pid
+ 
+# 监听端口号，默认为 6379，如果你设为 0 ，redis 将不在 socket 上监听任何客户端连接。
+port 6379
+ 
+# TCP 监听的最大容纳数量
+#
+# 在高并发的环境下，你需要把这个值调高以避免客户端连接缓慢的问题。
+# Linux 内核会一声不响的把这个值缩小成 /proc/sys/net/core/somaxconn 对应的值，
+# 所以你要修改这两个值才能达到你的预期。
+tcp-backlog 511
+ 
+# 默认情况下，redis 在 server 上所有有效的网络接口上监听客户端连接。
+# 你如果只想让它在一个网络接口上监听，那你就绑定一个IP或者多个IP。
+#
+# 示例，多个IP用空格隔开:
+#
+# bind 192.168.1.100 10.0.0.1
+# bind 127.0.0.1
+ 
+# 指定 unix socket 的路径。
+#
+# unixsocket /tmp/redis.sock
+# unixsocketperm 755
+ 
+# 指定在一个 client 空闲多少秒之后关闭连接（0 就是不管它）
+timeout 0
+ 
+# tcp 心跳包。
+#
+# 如果设置为非零，则在与客户端缺乏通讯的时候使用 SO_KEEPALIVE 发送 tcp acks 给客户端。
+# 这个之所有有用，主要由两个原因：
+#
+# 1) 防止死的 peers
+# 2) Take the connection alive from the point of view of network
+#    equipment in the middle.
+#
+# On Linux, the specified value (in seconds) is the period used to send ACKs.
+# Note that to close the connection the double of the time is needed.
+# On other kernels the period depends on the kernel configuration.
+#
+# A reasonable value for this option is 60 seconds.
+# 推荐一个合理的值就是60秒
+tcp-keepalive 0
+ 
+# 定义日志级别。
+# 可以是下面的这些值：
+# debug (适用于开发或测试阶段)
+# verbose (many rarely useful info, but not a mess like the debug level)
+# notice (适用于生产环境)
+# warning (仅仅一些重要的消息被记录)
+loglevel notice
+ 
+# 指定日志文件的位置
+logfile ""
+ 
+# 要想把日志记录到系统日志，就把它改成 yes，
+# 也可以可选择性的更新其他的syslog 参数以达到你的要求
+# syslog-enabled no
+ 
+# 设置 syslog 的 identity。
+# syslog-ident redis
+ 
+# 设置 syslog 的 facility，必须是 USER 或者是 LOCAL0-LOCAL7 之间的值。
+# syslog-facility local0
+ 
+# 设置数据库的数目。
+# 默认数据库是 DB 0，你可以在每个连接上使用 select <dbid> 命令选择一个不同的数据库，
+# 但是 dbid 必须是一个介于 0 到 databasees - 1 之间的值
+databases 16
+ 
+################################ 快照 ################################
+#
+# 存 DB 到磁盘：
+#
+#   格式：save <间隔时间（秒）> <写入次数>
+#
+#   根据给定的时间间隔和写入次数将数据保存到磁盘
+#
+#   下面的例子的意思是：
+#   900 秒内如果至少有 1 个 key 的值变化，则保存
+#   300 秒内如果至少有 10 个 key 的值变化，则保存
+#   60 秒内如果至少有 10000 个 key 的值变化，则保存
+#　　
+#   注意：你可以注释掉所有的 save 行来停用保存功能。
+#   也可以直接一个空字符串来实现停用：
+#   save ""
+ 
+save 900 1
+save 300 10
+save 60 10000
+ 
+# 默认情况下，如果 redis 最后一次的后台保存失败，redis 将停止接受写操作，
+# 这样以一种强硬的方式让用户知道数据不能正确的持久化到磁盘，
+# 否则就会没人注意到灾难的发生。
+#
+# 如果后台保存进程重新启动工作了，redis 也将自动的允许写操作。
+#
+# 然而你要是安装了靠谱的监控，你可能不希望 redis 这样做，那你就改成 no 好了。
+stop-writes-on-bgsave-error yes
+ 
+# 是否在 dump .rdb 数据库的时候使用 LZF 压缩字符串
+# 默认都设为 yes
+# 如果你希望保存子进程节省点 cpu ，你就设置它为 no ，
+# 不过这个数据集可能就会比较大
+rdbcompression yes
+ 
+# 是否校验rdb文件
+rdbchecksum yes
+ 
+# 设置 dump 的文件位置
+dbfilename dump.rdb
+ 
+# 工作目录
+# 例如上面的 dbfilename 只指定了文件名，
+# 但是它会写入到这个目录下。这个配置项一定是个目录，而不能是文件名。
+dir ./
+ 
+################################# 主从复制 #################################
+ 
+# 主从复制。使用 slaveof 来让一个 redis 实例成为另一个reids 实例的副本。
+# 注意这个只需要在 slave 上配置。
+#
+# slaveof <masterip> <masterport>
+ 
+# 如果 master 需要密码认证，就在这里设置
+# masterauth <master-password>
+ 
+# 当一个 slave 与 master 失去联系，或者复制正在进行的时候，
+# slave 可能会有两种表现：
+#
+# 1) 如果为 yes ，slave 仍然会应答客户端请求，但返回的数据可能是过时，
+#    或者数据可能是空的在第一次同步的时候
+#
+# 2) 如果为 no ，在你执行除了 info he salveof 之外的其他命令时，
+#    slave 都将返回一个 "SYNC with master in progress" 的错误，
+#
+slave-serve-stale-data yes
+ 
+# 你可以配置一个 slave 实体是否接受写入操作。
+# 通过写入操作来存储一些短暂的数据对于一个 slave 实例来说可能是有用的，
+# 因为相对从 master 重新同步数而言，据数据写入到 slave 会更容易被删除。
+# 但是如果客户端因为一个错误的配置写入，也可能会导致一些问题。
+#
+# 从 redis 2.6 版起，默认 slaves 都是只读的。
+#
+# Note: read only slaves are not designed to be exposed to untrusted clients
+# on the internet. It's just a protection layer against misuse of the instance.
+# Still a read only slave exports by default all the administrative commands
+# such as CONFIG, DEBUG, and so forth. To a limited extent you can improve
+# security of read only slaves using 'rename-command' to shadow all the
+# administrative / dangerous commands.
+# 注意：只读的 slaves 没有被设计成在 internet 上暴露给不受信任的客户端。
+# 它仅仅是一个针对误用实例的一个保护层。
+slave-read-only yes
+ 
+# Slaves 在一个预定义的时间间隔内发送 ping 命令到 server 。
+# 你可以改变这个时间间隔。默认为 10 秒。
+#
+# repl-ping-slave-period 10
+ 
+# The following option sets the replication timeout for:
+# 设置主从复制过期时间
+#
+# 1) Bulk transfer I/O during SYNC, from the point of view of slave.
+# 2) Master timeout from the point of view of slaves (data, pings).
+# 3) Slave timeout from the point of view of masters (REPLCONF ACK pings).
+#
+# It is important to make sure that this value is greater than the value
+# specified for repl-ping-slave-period otherwise a timeout will be detected
+# every time there is low traffic between the master and the slave.
+# 这个值一定要比 repl-ping-slave-period 大
+#
+# repl-timeout 60
+ 
+# Disable TCP_NODELAY on the slave socket after SYNC?
+#
+# If you select "yes" Redis will use a smaller number of TCP packets and
+# less bandwidth to send data to slaves. But this can add a delay for
+# the data to appear on the slave side, up to 40 milliseconds with
+# Linux kernels using a default configuration.
+#
+# If you select "no" the delay for data to appear on the slave side will
+# be reduced but more bandwidth will be used for replication.
+#
+# By default we optimize for low latency, but in very high traffic conditions
+# or when the master and slaves are many hops away, turning this to "yes" may
+# be a good idea.
+repl-disable-tcp-nodelay no
+ 
+# 设置主从复制容量大小。这个 backlog 是一个用来在 slaves 被断开连接时
+# 存放 slave 数据的 buffer，所以当一个 slave 想要重新连接，通常不希望全部重新同步，
+# 只是部分同步就够了，仅仅传递 slave 在断开连接时丢失的这部分数据。
+#
+# The biggest the replication backlog, the longer the time the slave can be
+# disconnected and later be able to perform a partial resynchronization.
+# 这个值越大，salve 可以断开连接的时间就越长。
+#
+# The backlog is only allocated once there is at least a slave connected.
+#
+# repl-backlog-size 1mb
+ 
+# After a master has no longer connected slaves for some time, the backlog
+# will be freed. The following option configures the amount of seconds that
+# need to elapse, starting from the time the last slave disconnected, for
+# the backlog buffer to be freed.
+# 在某些时候，master 不再连接 slaves，backlog 将被释放。
+#
+# A value of 0 means to never release the backlog.
+# 如果设置为 0 ，意味着绝不释放 backlog 。
+#
+# repl-backlog-ttl 3600
+ 
+# 当 master 不能正常工作的时候，Redis Sentinel 会从 slaves 中选出一个新的 master，
+# 这个值越小，就越会被优先选中，但是如果是 0 ， 那是意味着这个 slave 不可能被选中。
+#
+# 默认优先级为 100。
+slave-priority 100
+ 
+# It is possible for a master to stop accepting writes if there are less than
+# N slaves connected, having a lag less or equal than M seconds.
+#
+# The N slaves need to be in "online" state.
+#
+# The lag in seconds, that must be <= the specified value, is calculated from
+# the last ping received from the slave, that is usually sent every second.
+#
+# This option does not GUARANTEES that N replicas will accept the write, but
+# will limit the window of exposure for lost writes in case not enough slaves
+# are available, to the specified number of seconds.
+#
+# For example to require at least 3 slaves with a lag <= 10 seconds use:
+#
+# min-slaves-to-write 3
+# min-slaves-max-lag 10
+#
+# Setting one or the other to 0 disables the feature.
+#
+# By default min-slaves-to-write is set to 0 (feature disabled) and
+# min-slaves-max-lag is set to 10.
+ 
+################################## 安全 ###################################
+ 
+# Require clients to issue AUTH <PASSWORD> before processing any other
+# commands.  This might be useful in environments in which you do not trust
+# others with access to the host running redis-server.
+#
+# This should stay commented out for backward compatibility and because most
+# people do not need auth (e.g. they run their own servers).
+# 
+# Warning: since Redis is pretty fast an outside user can try up to
+# 150k passwords per second against a good box. This means that you should
+# use a very strong password otherwise it will be very easy to break.
+# 
+# 设置认证密码
+# requirepass foobared
+ 
+# Command renaming.
+#
+# It is possible to change the name of dangerous commands in a shared
+# environment. For instance the CONFIG command may be renamed into something
+# hard to guess so that it will still be available for internal-use tools
+# but not available for general clients.
+#
+# Example:
+#
+# rename-command CONFIG b840fc02d524045429941cc15f59e41cb7be6c52
+#
+# It is also possible to completely kill a command by renaming it into
+# an empty string:
+#
+# rename-command CONFIG ""
+#
+# Please note that changing the name of commands that are logged into the
+# AOF file or transmitted to slaves may cause problems.
+ 
+################################### 限制 ####################################
+ 
+# Set the max number of connected clients at the same time. By default
+# this limit is set to 10000 clients, however if the Redis server is not
+# able to configure the process file limit to allow for the specified limit
+# the max number of allowed clients is set to the current file limit
+# minus 32 (as Redis reserves a few file descriptors for internal uses).
+#
+# 一旦达到最大限制，redis 将关闭所有的新连接
+# 并发送一个‘max number of clients reached’的错误。
+#
+# maxclients 10000
+ 
+# 如果你设置了这个值，当缓存的数据容量达到这个值， redis 将根据你选择的
+# eviction 策略来移除一些 keys。
+#
+# 如果 redis 不能根据策略移除 keys ，或者是策略被设置为 ‘noeviction’，
+# redis 将开始响应错误给命令，如 set，lpush 等等，
+# 并继续响应只读的命令，如 get
+#
+# This option is usually useful when using Redis as an LRU cache, or to set
+# a hard memory limit for an instance (using the 'noeviction' policy).
+#
+# WARNING: If you have slaves attached to an instance with maxmemory on,
+# the size of the output buffers needed to feed the slaves are subtracted
+# from the used memory count, so that network problems / resyncs will
+# not trigger a loop where keys are evicted, and in turn the output
+# buffer of slaves is full with DELs of keys evicted triggering the deletion
+# of more keys, and so forth until the database is completely emptied.
+#
+# In short... if you have slaves attached it is suggested that you set a lower
+# limit for maxmemory so that there is some free RAM on the system for slave
+# output buffers (but this is not needed if the policy is 'noeviction').
+#
+# 最大使用内存
+# maxmemory <bytes>
+ 
+# 最大内存策略，你有 5 个选择。
+# 
+# volatile-lru -> remove the key with an expire set using an LRU algorithm
+# volatile-lru -> 使用 LRU 算法移除包含过期设置的 key 。
+# allkeys-lru -> remove any key accordingly to the LRU algorithm
+# allkeys-lru -> 根据 LRU 算法移除所有的 key 。
+# volatile-random -> remove a random key with an expire set
+# allkeys-random -> remove a random key, any key
+# volatile-ttl -> remove the key with the nearest expire time (minor TTL)
+# noeviction -> don't expire at all, just return an error on write operations
+# noeviction -> 不让任何 key 过期，只是给写入操作返回一个错误
+# 
+# Note: with any of the above policies, Redis will return an error on write
+#       operations, when there are not suitable keys for eviction.
+#
+#       At the date of writing this commands are: set setnx setex append
+#       incr decr rpush lpush rpushx lpushx linsert lset rpoplpush sadd
+#       sinter sinterstore sunion sunionstore sdiff sdiffstore zadd zincrby
+#       zunionstore zinterstore hset hsetnx hmset hincrby incrby decrby
+#       getset mset msetnx exec sort
+#
+# The default is:
+#
+# maxmemory-policy noeviction
+ 
+# LRU and minimal TTL algorithms are not precise algorithms but approximated
+# algorithms (in order to save memory), so you can tune it for speed or
+# accuracy. For default Redis will check five keys and pick the one that was
+# used less recently, you can change the sample size using the following
+# configuration directive.
+#
+# The default of 5 produces good enough results. 10 Approximates very closely
+# true LRU but costs a bit more CPU. 3 is very fast but not very accurate.
+#
+# maxmemory-samples 5
+ 
+############################## APPEND ONLY MODE ###############################
+ 
+# By default Redis asynchronously dumps the dataset on disk. This mode is
+# good enough in many applications, but an issue with the Redis process or
+# a power outage may result into a few minutes of writes lost (depending on
+# the configured save points).
+#
+# The Append Only File is an alternative persistence mode that provides
+# much better durability. For instance using the default data fsync policy
+# (see later in the config file) Redis can lose just one second of writes in a
+# dramatic event like a server power outage, or a single write if something
+# wrong with the Redis process itself happens, but the operating system is
+# still running correctly.
+#
+# AOF and RDB persistence can be enabled at the same time without problems.
+# If the AOF is enabled on startup Redis will load the AOF, that is the file
+# with the better durability guarantees.
+#
+# Please check http://redis.io/topics/persistence for more information.
+ 
+appendonly no
+ 
+# The name of the append only file (default: "appendonly.aof")
+ 
+appendfilename "appendonly.aof"
+ 
+# The fsync() call tells the Operating System to actually write data on disk
+# instead to wait for more data in the output buffer. Some OS will really flush 
+# data on disk, some other OS will just try to do it ASAP.
+#
+# Redis supports three different modes:
+#
+# no: don't fsync, just let the OS flush the data when it wants. Faster.
+# always: fsync after every write to the append only log . Slow, Safest.
+# everysec: fsync only one time every second. Compromise.
+#
+# The default is "everysec", as that's usually the right compromise between
+# speed and data safety. It's up to you to understand if you can relax this to
+# "no" that will let the operating system flush the output buffer when
+# it wants, for better performances (but if you can live with the idea of
+# some data loss consider the default persistence mode that's snapshotting),
+# or on the contrary, use "always" that's very slow but a bit safer than
+# everysec.
+#
+# More details please check the following article:
+# http://antirez.com/post/redis-persistence-demystified.html
+#
+# If unsure, use "everysec".
+ 
+# appendfsync always
+appendfsync everysec
+# appendfsync no
+ 
+# When the AOF fsync policy is set to always or everysec, and a background
+# saving process (a background save or AOF log background rewriting) is
+# performing a lot of I/O against the disk, in some Linux configurations
+# Redis may block too long on the fsync() call. Note that there is no fix for
+# this currently, as even performing fsync in a different thread will block
+# our synchronous write(2) call.
+#
+# In order to mitigate this problem it's possible to use the following option
+# that will prevent fsync() from being called in the main process while a
+# BGSAVE or BGREWRITEAOF is in progress.
+#
+# This means that while another child is saving, the durability of Redis is
+# the same as "appendfsync none". In practical terms, this means that it is
+# possible to lose up to 30 seconds of log in the worst scenario (with the
+# default Linux settings).
+# 
+# If you have latency problems turn this to "yes". Otherwise leave it as
+# "no" that is the safest pick from the point of view of durability.
+ 
+no-appendfsync-on-rewrite no
+ 
+# Automatic rewrite of the append only file.
+# Redis is able to automatically rewrite the log file implicitly calling
+# BGREWRITEAOF when the AOF log size grows by the specified percentage.
+# 
+# This is how it works: Redis remembers the size of the AOF file after the
+# latest rewrite (if no rewrite has happened since the restart, the size of
+# the AOF at startup is used).
+#
+# This base size is compared to the current size. If the current size is
+# bigger than the specified percentage, the rewrite is triggered. Also
+# you need to specify a minimal size for the AOF file to be rewritten, this
+# is useful to avoid rewriting the AOF file even if the percentage increase
+# is reached but it is still pretty small.
+#
+# Specify a percentage of zero in order to disable the automatic AOF
+# rewrite feature.
+ 
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+ 
+################################ LUA SCRIPTING  ###############################
+ 
+# Max execution time of a Lua script in milliseconds.
+#
+# If the maximum execution time is reached Redis will log that a script is
+# still in execution after the maximum allowed time and will start to
+# reply to queries with an error.
+#
+# When a long running script exceed the maximum execution time only the
+# SCRIPT KILL and SHUTDOWN NOSAVE commands are available. The first can be
+# used to stop a script that did not yet called write commands. The second
+# is the only way to shut down the server in the case a write commands was
+# already issue by the script but the user don't want to wait for the natural
+# termination of the script.
+#
+# Set it to 0 or a negative value for unlimited execution without warnings.
+lua-time-limit 5000
+ 
+################################ REDIS 集群  ###############################
+#
+# 启用或停用集群
+# cluster-enabled yes
+ 
+# Every cluster node has a cluster configuration file. This file is not
+# intended to be edited by hand. It is created and updated by Redis nodes.
+# Every Redis Cluster node requires a different cluster configuration file.
+# Make sure that instances running in the same system does not have
+# overlapping cluster configuration file names.
+#
+# cluster-config-file nodes-6379.conf
+ 
+# Cluster node timeout is the amount of milliseconds a node must be unreachable 
+# for it to be considered in failure state.
+# Most other internal time limits are multiple of the node timeout.
+#
+# cluster-node-timeout 15000
+ 
+# A slave of a failing master will avoid to start a failover if its data
+# looks too old.
+#
+# There is no simple way for a slave to actually have a exact measure of
+# its "data age", so the following two checks are performed:
+#
+# 1) If there are multiple slaves able to failover, they exchange messages
+#    in order to try to give an advantage to the slave with the best
+#    replication offset (more data from the master processed).
+#    Slaves will try to get their rank by offset, and apply to the start
+#    of the failover a delay proportional to their rank.
+#
+# 2) Every single slave computes the time of the last interaction with
+#    its master. This can be the last ping or command received (if the master
+#    is still in the "connected" state), or the time that elapsed since the
+#    disconnection with the master (if the replication link is currently down).
+#    If the last interaction is too old, the slave will not try to failover
+#    at all.
+#
+# The point "2" can be tuned by user. Specifically a slave will not perform
+# the failover if, since the last interaction with the master, the time
+# elapsed is greater than:
+#
+#   (node-timeout * slave-validity-factor) + repl-ping-slave-period
+#
+# So for example if node-timeout is 30 seconds, and the slave-validity-factor
+# is 10, and assuming a default repl-ping-slave-period of 10 seconds, the
+# slave will not try to failover if it was not able to talk with the master
+# for longer than 310 seconds.
+#
+# A large slave-validity-factor may allow slaves with too old data to failover
+# a master, while a too small value may prevent the cluster from being able to
+# elect a slave at all.
+#
+# For maximum availability, it is possible to set the slave-validity-factor
+# to a value of 0, which means, that slaves will always try to failover the
+# master regardless of the last time they interacted with the master.
+# (However they'll always try to apply a delay proportional to their
+# offset rank).
+#
+# Zero is the only value able to guarantee that when all the partitions heal
+# the cluster will always be able to continue.
+#
+# cluster-slave-validity-factor 10
+ 
+# Cluster slaves are able to migrate to orphaned masters, that are masters
+# that are left without working slaves. This improves the cluster ability
+# to resist to failures as otherwise an orphaned master can't be failed over
+# in case of failure if it has no working slaves.
+#
+# Slaves migrate to orphaned masters only if there are still at least a
+# given number of other working slaves for their old master. This number
+# is the "migration barrier". A migration barrier of 1 means that a slave
+# will migrate only if there is at least 1 other working slave for its master
+# and so forth. It usually reflects the number of slaves you want for every
+# master in your cluster.
+#
+# Default is 1 (slaves migrate only if their masters remain with at least
+# one slave). To disable migration just set it to a very large value.
+# A value of 0 can be set but is useful only for debugging and dangerous
+# in production.
+#
+# cluster-migration-barrier 1
+ 
+# In order to setup your cluster make sure to read the documentation
+# available at http://redis.io web site.
+ 
+################################## SLOW LOG ###################################
+ 
+# The Redis Slow Log is a system to log queries that exceeded a specified
+# execution time. The execution time does not include the I/O operations
+# like talking with the client, sending the reply and so forth,
+# but just the time needed to actually execute the command (this is the only
+# stage of command execution where the thread is blocked and can not serve
+# other requests in the meantime).
+# 
+# You can configure the slow log with two parameters: one tells Redis
+# what is the execution time, in microseconds, to exceed in order for the
+# command to get logged, and the other parameter is the length of the
+# slow log. When a new command is logged the oldest one is removed from the
+# queue of logged commands.
+ 
+# The following time is expressed in microseconds, so 1000000 is equivalent
+# to one second. Note that a negative number disables the slow log, while
+# a value of zero forces the logging of every command.
+slowlog-log-slower-than 10000
+ 
+# There is no limit to this length. Just be aware that it will consume memory.
+# You can reclaim memory used by the slow log with SLOWLOG RESET.
+slowlog-max-len 128
+ 
+############################# Event notification ##############################
+ 
+# Redis can notify Pub/Sub clients about events happening in the key space.
+# This feature is documented at http://redis.io/topics/keyspace-events
+# 
+# For instance if keyspace events notification is enabled, and a client
+# performs a DEL operation on key "foo" stored in the Database 0, two
+# messages will be published via Pub/Sub:
+#
+# PUBLISH __keyspace@0__:foo del
+# PUBLISH __keyevent@0__:del foo
+#
+# It is possible to select the events that Redis will notify among a set
+# of classes. Every class is identified by a single character:
+#
+#  K     Keyspace events, published with __keyspace@<db>__ prefix.
+#  E     Keyevent events, published with __keyevent@<db>__ prefix.
+#  g     Generic commands (non-type specific) like DEL, EXPIRE, RENAME, ...
+#  $     String commands
+#  l     List commands
+#  s     Set commands
+#  h     Hash commands
+#  z     Sorted set commands
+#  x     Expired events (events generated every time a key expires)
+#  e     Evicted events (events generated when a key is evicted for maxmemory)
+#  A     Alias for g$lshzxe, so that the "AKE" string means all the events.
+#
+#  The "notify-keyspace-events" takes as argument a string that is composed
+#  by zero or multiple characters. The empty string means that notifications
+#  are disabled at all.
+#
+#  Example: to enable list and generic events, from the point of view of the
+#           event name, use:
+#
+#  notify-keyspace-events Elg
+#
+#  Example 2: to get the stream of the expired keys subscribing to channel
+#             name __keyevent@0__:expired use:
+#
+#  notify-keyspace-events Ex
+#
+#  By default all notifications are disabled because most users don't need
+#  this feature and the feature has some overhead. Note that if you don't
+#  specify at least one of K or E, no events will be delivered.
+notify-keyspace-events ""
+ 
+############################### ADVANCED CONFIG ###############################
+ 
+# Hashes are encoded using a memory efficient data structure when they have a
+# small number of entries, and the biggest entry does not exceed a given
+# threshold. These thresholds can be configured using the following directives.
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+ 
+# Similarly to hashes, small lists are also encoded in a special way in order
+# to save a lot of space. The special representation is only used when
+# you are under the following limits:
+list-max-ziplist-entries 512
+list-max-ziplist-value 64
+ 
+# Sets have a special encoding in just one case: when a set is composed
+# of just strings that happens to be integers in radix 10 in the range
+# of 64 bit signed integers.
+# The following configuration setting sets the limit in the size of the
+# set in order to use this special memory saving encoding.
+set-max-intset-entries 512
+ 
+# Similarly to hashes and lists, sorted sets are also specially encoded in
+# order to save a lot of space. This encoding is only used when the length and
+# elements of a sorted set are below the following limits:
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+ 
+# HyperLogLog sparse representation bytes limit. The limit includes the
+# 16 bytes header. When an HyperLogLog using the sparse representation crosses
+# this limit, it is converted into the dense representation.
+#
+# A value greater than 16000 is totally useless, since at that point the
+# dense representation is more memory efficient.
+# 
+# The suggested value is ~ 3000 in order to have the benefits of
+# the space efficient encoding without slowing down too much PFADD,
+# which is O(N) with the sparse encoding. The value can be raised to
+# ~ 10000 when CPU is not a concern, but space is, and the data set is
+# composed of many HyperLogLogs with cardinality in the 0 - 15000 range.
+hll-sparse-max-bytes 3000
+ 
+# Active rehashing uses 1 millisecond every 100 milliseconds of CPU time in
+# order to help rehashing the main Redis hash table (the one mapping top-level
+# keys to values). The hash table implementation Redis uses (see dict.c)
+# performs a lazy rehashing: the more operation you run into a hash table
+# that is rehashing, the more rehashing "steps" are performed, so if the
+# server is idle the rehashing is never complete and some more memory is used
+# by the hash table.
+# 
+# The default is to use this millisecond 10 times every second in order to
+# active rehashing the main dictionaries, freeing memory when possible.
+#
+# If unsure:
+# use "activerehashing no" if you have hard latency requirements and it is
+# not a good thing in your environment that Redis can reply form time to time
+# to queries with 2 milliseconds delay.
+#
+# use "activerehashing yes" if you don't have such hard requirements but
+# want to free memory asap when possible.
+activerehashing yes
+ 
+# The client output buffer limits can be used to force disconnection of clients
+# that are not reading data from the server fast enough for some reason (a
+# common reason is that a Pub/Sub client can't consume messages as fast as the
+# publisher can produce them).
+#
+# The limit can be set differently for the three different classes of clients:
+#
+# normal -> normal clients
+# slave  -> slave clients and MONITOR clients
+# pubsub -> clients subscribed to at least one pubsub channel or pattern
+#
+# The syntax of every client-output-buffer-limit directive is the following:
+#
+# client-output-buffer-limit <class> <hard limit> <soft limit> <soft seconds>
+#
+# A client is immediately disconnected once the hard limit is reached, or if
+# the soft limit is reached and remains reached for the specified number of
+# seconds (continuously).
+# So for instance if the hard limit is 32 megabytes and the soft limit is
+# 16 megabytes / 10 seconds, the client will get disconnected immediately
+# if the size of the output buffers reach 32 megabytes, but will also get
+# disconnected if the client reaches 16 megabytes and continuously overcomes
+# the limit for 10 seconds.
+#
+# By default normal clients are not limited because they don't receive data
+# without asking (in a push way), but just after a request, so only
+# asynchronous clients may create a scenario where data is requested faster
+# than it can read.
+#
+# Instead there is a default limit for pubsub and slave clients, since
+# subscribers and slaves receive data in a push fashion.
+#
+# Both the hard or the soft limit can be disabled by setting them to zero.
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit slave 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+ 
+# Redis calls an internal function to perform many background tasks, like
+# closing connections of clients in timeout, purging expired keys that are
+# never requested, and so forth.
+#
+# Not all tasks are performed with the same frequency, but Redis checks for
+# tasks to perform accordingly to the specified "hz" value.
+#
+# By default "hz" is set to 10. Raising the value will use more CPU when
+# Redis is idle, but at the same time will make Redis more responsive when
+# there are many keys expiring at the same time, and timeouts may be
+# handled with more precision.
+#
+# The range is between 1 and 500, however a value over 100 is usually not
+# a good idea. Most users should use the default of 10 and raise this up to
+# 100 only in environments where very low latency is required.
+hz 10
+ 
+# When a child rewrites the AOF file, if the following option is enabled
+# the file will be fsync-ed every 32 MB of data generated. This is useful
+# in order to commit the file to the disk more incrementally and avoid
+# big latency spikes.
+aof-rewrite-incremental-fsync yes
+
+```
+
+##### Postgres安装
+
+```bash
+brew install postgresql
+pg_ctl -V 查看当前版本
+默认安装路径/usr/local/var/postgres
+
+initdb /usr/local/var/postgres初始化数据库
+手动启动
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+查看状态：
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log status
+停止：
+
+$ pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log stop -s -m fast
+查看进程：
+
+$ ps auxwww | grep postgres
+创建用户和数据库：
+$ createuser  -P admin
+admin
+admin
+$ createdb -Oadmin -Eutf8 outline
+$ createdb -Oadmin -Eutf8 outline-test
+$ psql
+postgres=# GRANT ALL PRIVILEGES ON outline TO admin;
+postgres=# \q
+进入命令行模式：
+
+$ psql -U admin outline -h localhost -W
+如果出现 FATAL: Ident authentication failed for user，是因为：
+
+This is because by default PostgreSQL uses ‘ident’ authentication i.e it checks if the username exists on the system. You need to change authentication mode to ‘trust’ as we do not want to add a system user. Modify the settings in “pg_hba.conf” to use ‘trust’ authentication.
+
+请修改 /usr/local/var/postgres/pg_hba.conf 为：
+
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
+```
+
+##### Ruby安装
+```bash
+brew install ruby
+
+rvm安装
+安装ruby推荐使用rvm
+curl -L https://raw.githubusercontent.com/wayneeseguin/rvm/master/binscripts/rvm-installer | bash -s stable
+rvm ruby版本管理工具
+rvm install 2.3.2 
+rvm use 2.3.2
+rvm list
+
+rvm添加ruby中国镜像
+echo "ruby_url=https://cache.ruby-china.com/pub/ruby" > ~/.rvm/user/db
+
+ruby镜像
+
+http://gems.ruby-china.com/
+https://rubygems.org
+
+***ruby-chin镜像不要是org，有问题，要使用com
+```
+
+##### gem安装
+
+```bash
+查看镜像
+gem sources -l
+gem sources --remove https://rubygems.org/
+gem sources -a https://gems.ruby-china.com
+指定镜像下载
+sudo gem install bundler jekyll -r https://gems.ruby-china.com
+
+taobao镜像在2016年之后被创始人放弃，该用腾讯服务器同步使用ruby-china
+https://ruby-china.org/topics/29250
+
+bundle也使用ruby.china
+bundle也使用ruby config mirror.https://rubygems.org https://gems.ruby-china.com
+```
+
+##### jekyll
+
+问题：Could not find gem 'jekyll-paginate' in any of the gem sources listed in your Gemfile.
+`bundle install`重新安装bundle
+
+
+启动部署：
+`bundle exec jekyll serve`
+
+
+##### npm
+
+```bash
+发布npm package
+npm publish --access public
+
+npm unpublish --force 限制在72小时之内发布的package，超过72小时，向support@npmjs.com发送邮件删除
+
+npm adduser 登陆
+```
+
+##### git
+
+**git 资源名称区分大小写**
+
+> git 使用
+新机器添加授权，创建is_rsa密钥（默认保存为~/.ssh/id_rsa）
+`ssh-keygen -t rsa -b 4096 -C "1034709616@qq.com"`
+进入https://github.com/settings/keys添加
+
+
+server
+```bash
+makdir gitproject
+git init --bare ugank.git
+```
+client
+```bash
+git clone root@115.159.3.160:/home/nginx/git-repo/ugank.git
+
+cd localProject
+cp -r * ../gitproject
+cp -r .meteor ../gitproject
+```
+
+搭建移动硬盘与本地硬盘之间的服务
+服务端：
+```bash
+mkdir ccc
+cd ccc
+git init --bare
+```
+客户端：
+```bash
+cd projects
+git init
+git add .
+git commit -m "init push"
+git remote add origin /xxx/yyy/zzz.../ccc(绝对路径)
+git push
+```
+
+> 关于git
+修改.gitignore文件后，清楚git项目缓存才可以生效
+`git rm -r --cached .`
+
+pubstartup
+mediastartup
+orderstartup
+一定要关闭掉
+
+
+> Git的基本操作
+初始化操作
+```bash
+    $ git config -global user.name <name> #设置提交者名字
+    $ git config -global user.email <email> #设置提交者邮箱
+    $ git config -global core.editor <editor> #设置默认文本编辑器
+    $ git config -global merge.tool <tool> #设置解决合并冲突时差异分析工具
+    $ git config -list #检查已有的配置信息
+```
+创建新版本库
+```bash
+    $ git clone <url> #克隆远程版本库
+    $ git init #初始化本地版本库
+```
+修改和提交
+```bash
+    $ git add . #添加所有改动过的文件
+    $ git add <file> #添加指定的文件
+    $ git mv <old> <new> #文件重命名
+    $ git rm <file> #删除文件
+    $ git rm -cached <file> #停止跟踪文件但不删除
+    $ git commit -m <file> #提交指定文件
+    $ git commit -m “commit message” #提交所有更新过的文件
+    $ git commit -amend #修改最后一次提交
+    $ git commit -C HEAD -a -amend #增补提交（不会产生新的提交历史纪录）
+```
+查看提交历史
+```bash
+    $ git log #查看提交历史
+    $ git log -p <file> #查看指定文件的提交历史
+    $ git blame <file> #以列表方式查看指定文件的提交历史
+    $ gitk #查看当前分支历史纪录
+    $ gitk <branch> #查看某分支历史纪录
+    $ gitk --all #查看所有分支历史纪录
+    $ git branch -v #每个分支最后的提交
+    $ git status #查看当前状态
+    $ git diff #查看变更内容
+```
+撤消操作
+```bash
+    $ git reset -hard HEAD #撤消工作目录中所有未提交文件的修改内容
+    $ git checkout HEAD <file1> <file2> #撤消指定的未提交文件的修改内容
+    $ git checkout HEAD. #撤消所有文件
+    $ git revert <commit> #撤消指定的提交
+```
+分支与标签
+```bash
+    $ git branch #显示所有本地分支
+    $ git checkout <branch/tagname> #切换到指定分支或标签
+    $ git branch <new-branch> #创建新分支
+    $ git branch -d <branch> #删除本地分支
+    $ git tag #列出所有本地标签
+    $ git tag <tagname> #基于最新提交创建标签
+    $ git tag -d <tagname> #删除标签
+```    
+合并与衍合
+```bash
+    $ git merge <branch> #合并指定分支到当前分支
+    $ git rebase <branch> #衍合指定分支到当前分支
+```
+远程操作
+```bash
+    $ git remote -v #查看远程版本库信息
+    $ git remote show <remote> #查看指定远程版本库信息
+    $ git remote add <remote> <url> #添加远程版本库
+    $ git fetch <remote> #从远程库获取代码
+    $ git pull <remote> <branch> #下载代码及快速合并
+    $ git push <remote> <branch> #上传代码及快速合并
+    $ git push <remote> : <branch>/<tagname> #删除远程分支或标签
+    $ git push -tags #上传所有标签
+```    
+
+```bash
+git branch -r 查看远程分支
+git checkout branch_name
+强制覆盖本地修改
+git fetch --all  
+git reset --hard origin/master 
+git pull
+新建的文件夹，文件，或者修改过文件名的新文件不会被删除，保留在项目中
+```
+
+
+> git安装
+```bash
+yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel gcc perl-ExtUtils-MakeMaker
+wget https://www.kernel.org/pub/software/scm/git/git-2.16.1.tar.xz
+xz -d git-2.16.1.tar.xz
+f-xvf git-2.16.1.tar
+cd git-2.16.1
+make prefix=/usr/local/git all
+make prefix=/usr/local/git install
+```
+client 客户端设置默认ssh key
+```bash
+touch ~/.ssh/config
+Host 115.159.3.160
+IdentityFile ~/Public/caoliao
+```
+测试
+```bash
+ssh -T root@115.159.3.160
+git clone nginx@115.159.3.160:/home/nginx/git-repo/oneMovie.git
+
+在服务器机器上clone时，可直接
+git clone /home/nginx/git-repo/oneMovie.git
+```
+
+##### python
+
+> 多版本共存
+```basah
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bash_profile
+echo 'export PATH="/usr/local/Cellar/postgresql/11.5_1/bin:$PATH"' >> ~/.bash_profile
+
+echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile
+
+pyenv install 2.7.10
+pyenv install 3.7.3
+
+指定版本
+pyenv shell 2.7.10
+```
+
+##### 开源数据优秀项目
+
+[全球手机号码 区号1](https://github.com/MichaelRocks/libphonenumber-android)
+[全球手机号码 区号2](https://github.com/jackocnr/intl-tel-input)
+google开源出来的(international flag)
+
+
+[lottie](https://github.com/airbnb/lottie-web)
+安装ae
+安装插件Plugin installation
+
+##### 第三方授权
+
+> [腾讯地图](http://lbs.qq.com/console/mykey.html)
+
+MUHBZ-F6N6I-B2VG2-5DASQ-QQIPE-T6BZP
+
+```bash
+<meta-data
+            android:name="TencentMapSDK"
+            android:value="MUHBZ-F6N6I-B2VG2-5DASQ-QQIPE-T6BZP"/>
+```
+
+
+> 豆瓣api
+https://api.douban.com/v2/movie/search?q=铁雨
+https://api.douban.com/v2/movie/subject/
+
+> [京东授权](http://isv.jd.com/isv/jos/appList.action )
+```bash
+web方式授权：
+1. 获取code
+https://kploauth.jd.com/oauth/authorize?response_type=code&app_key=7c3266fcec5a44d59e62b2fa18d8e620&redirect_uri=http://kepler.jd.com/oauth/code.do&state=yourstate
+2. code换token
+https://kploauth.jd.com/oauth/token?grant_type=authorization_code&app_key=7c3266fcec5a44d59e62b2fa18d8e620&app_secret=3d92b53a06c54c25af1e47afc498becd&redirect_uri=http://kepler.jd.com/oauth/code.do&code=X01w4P
+3. 结果
+{
+"access_token":"b13cfd9b4c09413285e017e6ed4fd78a8",
+"code":"0",
+"expires_in":2517651,
+"refresh_token":"9b06c7abe2a545ffae33cba7d15180fb9",
+"time":"1524043981242",
+"token_type":"bearer",
+"uid":"70892786398",
+"user_nick":"wnCVtHlanPbf"
+}
+```
+
+开普勒 安全码生成
+http://kepler.jd.com/console/summary/viewNew.action?app_id=9630
+/Volumes/ExFAT/android/AppTaoLink-master
+/Volumes/ExFAT/android/asKepler-injdnot_aweb 又不能生成了
+
+> [七牛](https://developer.qiniu.com/sdk#official-sdk)
+
+[工具](https://developer.qiniu.com/sdk#official-tool)
+
+"access_key":"38r8ofsGSxGUBDroPuG-nARcI0Hgpxh_PWAgEtw6"
+"secret_key":"46PdwNZ1Lm31IKzwAyY0rYwqDd6zoLhD3z9bcY9sISHFQ5HyYYre--d2smdzKmh3"
+**shell处理**
+```bash
+qshell rput video 铁雨.mkv [TSKS][Steel.Rain][2017][KO_CN].mkv
+qshell fetch http://pcs.baidu.com/rest/2.0/pcs/file?method=download&app_id=266719&path=/temp/%E7%8E%B0%E5%9C%A8%E5%BE%88%E6%83%B3%E8%A7%81%E4%BD%A0.2018.HD720P.%E9%9F%A9%E8%AF%AD%E4%B8%AD%E5%AD%97.mp4 ashan
+qshell rput ashan 黄金神威-5.mp4 黄金神威-5.mp4
+qshell rput ashan 妖怪旅馆营业中-1.mp4 妖怪旅馆营业中-1.mp4 
+```
+
+
+> [alipay授权](https://openhome.alipay.com/platform/detailApp.htm?appId=2018032302433267&tab=appDetail)
+appid:2018032302433267
+pid:2088031665230062
+
+[支付宝key管理](https://openhome.alipay.com/platform/detailApp.htm?appId=2018032302433267&tab=appDetail)
+[key管理](https://openhome.alipay.com/platform/keyManage.htm)
+
+> [淘宝授权](http://console.open.taobao.com/app/app.htm?appId=6321259#/config?appId=6321259&_k=4d4u6n)
+[百川 安全码生成](http://console.baichuan.taobao.com/appoverview.htm?appId=135808)
+
+
+返回新地址：
+https://g.alicdn.com/tm/detail/1.11.13/??other/videox.js?t=1_2013072520131122.js
+return e.indexOf("cloud.video.taobao.com") > 0 && (e = e.replace(".swf", ".mp4"), e = e.replace("/e/1/", "/e/6/"), e = e.replace(/(\/t\/\d\/)/, "/t/1/"), t = e), t
+swf 转 video
+https://aldcdn.tmall.com/recommend.htm?appId=03194&itemId=550577624915
+商品推荐
+https://desc.alicdn.com/i7/550/570/550577624915/TB1CRRGbAZmBKNjSZPi8qtFNVla.desc%7Cvar%5Edesc%3Bsign%5Ea1521020c7542a318e52906c81e2c494%3Blang%5Egbk%3Bt%5E1521943829
+商品描述
+https://xiaobao.taobao.com/contract/json/item_service.do?item_id=550577624915
+消费保障
+https://gy.taobao.com/charity_detail.htm?itemId=545792759163
+捐赠情况
+rate.taobao.com/detailCount.do?itemId=545792759163
+评论数量
+
+https://rate.tmall.com/listTagClouds.htm?itemId=550577624915
+评论分类
+https://dsr-rate.tmall.com/list_dsr_info.htm?itemId=550577624915
+评论数量，评分
+https://rate.tmall.com/list_detail_rate.htm?itemId=550577624915&sellerId=3295532020&order=3&currentPage=1
+评论分页
+
+> 阿里妈妈网
+
+阿里妈妈网站验证
+登记新网站
+您需要完成网站的校验，请在30分钟内完成以下步骤，如有问题请查看 验证步骤详情
+
+步骤一：下载验证文件 root.txt [下载]
+
+步骤二：将验证文件放置于您所配置域名(如www.yoursite.com)的根目录下
+
+步骤三：点击下方“完成验证”按钮
+
+> [google授权](https://console.cloud.google.com/home/dashboard?project=1034709616fish)
+项目id
+1034709616fish
+项目编号
+282710845697
+https://console.cloud.google.com/apis/credentials?project=1034709616fish
+
+网页应用 的客户端 ID
+282710845697-rlerblta4drj4qqt7ugsq0jsg0h29j0g.apps.googleusercontent.com
+e33jvY_F9tZZc6-AhQhC25tW
+Android 的客户端 ID
+282710845697-ev3rm6arn07lmsh83lgpgasq62fmatlt.apps.googleusercontent.com
+keytool -exportcert -keystore path-to-debug-or-production-keystore -list -v
+添加软件包名称和 SHA-1 签名证书指纹，以仅限您的 Android 应用使用。了解详情
+从 AndroidManifest.xml 文件获取软件包名称，然后使用以下命令获取指纹：
+iOS 的客户端 ID
+282710845697-k4vand7ivusi6p918u4m9ftsmo8ogcem.apps.googleusercontent.com
+com.googleusercontent.apps.282710845697-k4vand7ivusi6p918u4m9ftsmo8ogcem
+
+> [facebook授权](https://developers.facebook.com/)
+App ID 
+366939546998671
+App Secret 
+0238f396739fbf4a38b054a530e96ff4
+android
+Google Play Package Name
+cn.net.caoliao
+Class Name
+MainActivity
+Key Hashes
+
+> [wechat授权](https://open.weixin.qq.com/cgi-bin/appdetail?t=manage/detail&type=app&lang=zh_CN&token=6af13c76a8fe73bf4f520c43d58e404b583fc91f&appid=wx96f86a95cb3e67f1)
+AppID wx96f86a95cb3e67f1
+AppSecret 179c51bc663b2c37ac95643cf5cbd602
+应用签名：7e9801f880f91df06d92d521a29e7870
+
+> [小程序](https://mp.weixin.qq.com/)
+wx147dcbf395d3b60c
+
+> [百度统计](https://tongji.baidu.com/sc-web/6756271/home/site/index?siteId=0)
+
+> [搜素引擎收录](http://www.yibanquan.com.cn/regist.jsp)
+
+> [360广告联盟])(lianmeng.360.cn)
+> [百度联盟](https://ssp.baidu.com/)http://union.baidu.com/
+
+##### nodejs
+
+[优化](http://yuenshui.com/2017/02/25/How-to-make-the-node-js-application-run-stably/)
+
+> 安装
+```bash
+yum -y install xz xz-devel
+wget https://nodejs.org/dist/v9.4.0/node-v9.4.0-linux-x64.tar.xz
+xz -d node-v9.4.0-linux-x64.tar.xz
+tar -xvf node-v9.4.0-linux-x64.tar
+移动目录
+mv node-v9.4.0-linux-x64 /opt/node
+全局变量链接
+ln -s /opt/node-v9.4.0-linux-x64/bin/node /usr/local/bin/node
+ln -s /opt/node-v9.4.0-linux-x64/bin/npm /usr/local/bin/npm
+```
+
+```bash
+命令：node -pe process.versions
+{ http_parser: '2.7.0',
+  node: '9.0.0',
+  v8: '6.2.414.32-node.8',
+  uv: '1.15.0',
+  zlib: '1.2.11',
+  ares: '1.13.0',
+  modules: '59',
+  nghttp2: '1.25.0',
+  openssl: '1.0.2l',
+  icu: '59.1',
+  unicode: '9.0',
+  cldr: '31.0.1',
+  tz: '2017b' }
+
+命令：uname -a
+Darwin zhangshuaideMacBook-Air.local 16.7.0 Darwin Kernel Version 16.7.0: Tue Jan 30 11:27:06 PST 2018; root:xnu-3789.73.11~1/RELEASE_X86_64 x86_64
+```
+
+> 优秀packages
+```bash
+request = require('request');
+fs = require("fs");
+request("http://img.alicdn.com/bao/uploaded/i3/1714469509/TB2p1GwXxWYBuNjy1zkXXXGGpXa_!!1714469509.jpg").pipe(fs.createWriteStream('/Users/zhangshuai/doodle.png')).then(res => {console.log(res)})
+```
+
+```bash
+async
+http://caolan.github.io/async/docs.html#each
+http://blog.fens.me/nodejs-async/
+```
+
+```bash
+ewomail
+http://doc.ewomail.com/ewomail/317801
+http://ewomail.com/list-11.html
+```
+
+```bash
+fiber
+https://www.npmjs.com/package/fibers
+http://www.cnblogs.com/meteorcn/p/MeteorJS_Async_Fiber_Future_Wrap.html
+https://npm.taobao.org/package/fibers
+http://www.jb51.net/article/62712.htm
+http://www.cnblogs.com/cnxkey/articles/8547059.html
+```
+
+
+
+##### 安装brew
+
+```bash
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install xxx 开在updating
+command + c一次 取消updating直接安装
+```
+
+##### ffmpeg
+
+configure阶段错误，参考ffbuild/config.log文件
+
+if your error includes the -L flag, then delete the values in Library Search Paths
+if your error includes the -F flag, then delete the values in Framework Search Paths
+
+
+git clone https://github.com/FFmpeg/FFmpeg.git
+./configure && make && make install
+--enable-libtls
+--enable-openssl 
+二选一
+1．TLS与SSL的差异
+
+　　1）版本号：TLS记录格式与SSL记录格式相同，但版本号的值不同，TLS的版本1.0使用的版本号为SSLv3.1。
+
+　　2）报文鉴别码：SSLv3.0和TLS的MAC算法及MAC计算的范围不同。TLS使用了RFC-2104定义的HMAC算法。SSLv3.0使用了相似的算法，两者差别在于SSLv3.0中，填充字节与密钥之间采用的是连接运算，而HMAC算法采用的是异或运算。但是两者的安全程度是相同的。
+
+　　3）伪随机函数：TLS使用了称为PRF的伪随机函数来将密钥扩展成数据块，是更安全的方式。
+
+　　4）报警代码：TLS支持几乎所有的SSLv3.0报警代码，而且TLS还补充定义了很多报警代码，如解密失败（decryption_failed）、记录溢出（record_overflow）、未知CA（unknown_ca）、拒绝访问（access_denied）等。
+
+　　5）密文族和客户证书：SSLv3.0和TLS存在少量差别，即TLS不支持Fortezza密钥交换、加密算法和客户证书。
+
+　　6）certificate_verify和finished消息：SSLv3.0和TLS在用certificate_verify和finished消息计算MD5和SHA-1散列码时，计算的输入有少许差别，但安全性相当。
+
+　　7）加密计算：TLS与SSLv3.0在计算主密值（master secret）时采用的方式不同。
+
+　　8）填充：用户数据加密之前需要增加的填充字节。在SSL中，填充后的数据长度要达到密文块长度的最小整数倍。而在TLS中，填充后的数据长度可以是密文块长度的任意整数倍（但填充的最大长度为255字节），这种方式可以防止基于对报文长度进行分析的攻击。
+
+　　2．TLS的主要增强内容
+
+　　TLS的主要目标是使SSL更安全，并使协议的规范更精确和完善。TLS 在SSL v3.0 的基础上，提供了以下增强内容：
+
+　　1）更安全的MAC算法
+
+　　2）更严密的警报
+
+　　3）“灰色区域”规范的更明确的定义
+
+　　3．TLS对于安全性的改进
+
+　　1）对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。
+
+　　2）增强的伪随机功能（PRF）：PRF生成密钥数据。在TLS中，HMAC定义PRF。PRF使用两种散列算法保证其安全性。如果任一算法暴露了，只要第二种算法未暴露，则数据仍然是安全的。
+
+　　3）改进的已完成消息验证：TLS和SSLv3.0都对两个端点提供已完成的消息，该消息认证交换的消息没有被变更。然而，TLS将此已完成消息基于PRF和HMAC值之上，这也比SSLv3.0更安全。
+
+　　4）一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。
+
+　　5）特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。
+ --enable-mbedtls 
+ --enable-gnutls
+ 二选一
+ --enable-libdrm
+ 要求linux系统
+--enable-cuda-nvcc 
+chromaprint not found
+先编译https://github.com/acoustid/chromaprint
+--enable-chromaprint
+ERROR: DeckLinkAPI.h not found
+ --enable-decklink
+ ERROR: frei0r.h dlfcn.h not found
+  --enable-frei0r
+ERROR: gmp not found
+ --enable-gmp
+不可用
+./configure --enable-rpath --enable-gpl --enable-version3 --enable-nonfree --enable-shared --enable-small --enable-gray --enable-avresample --enable-avisynth --enable-gcrypt --enable-jni --enable-ladspa  --enable-libaom --enable-libaribb24  --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcelt --enable-libcdio  --enable-libcodec2 --enable-libdav1d --enable-libdavs2 --enable-libdc1394 --enable-libfdk-aac --enable-libflite  --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libiec61883 --enable-libilbc --enable-libjack --enable-libklvanc --enable-libkvazaar --enable-liblensfun --enable-libmodplug --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopencv --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt  --enable-libopus  --enable-libpulse --enable-librsvg --enable-librubberband --enable-librtmp --enable-libshine --enable-libsmbclient --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt  --enable-libssh --enable-libtensorflow --enable-libtesseract --enable-libtheora  --enable-libtls --enable-libtwolame --enable-libv4l2  --enable-libvidstab --enable-libvmaf --enable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs --enable-libxavs2 --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape --enable-libxvid --enable-libxml2 --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-mbedtls --enable-mediacodec --enable-libmysofa --enable-openal --enable-opencl --enable-opengl  --enable-pocketsphinx  --enable-vapoursynth  --enable-libmfx --enable-libnpp --enable-mmal --enable-omx --enable-omx-rpi --enable-rkmpp --enable-cross-compile --enable-pic  --enable-thumb --enable-lto --enable-hardcoded-tables --enable-extra-warnings --enable-memory-poisoning --enable-ftrapv --enable-random  --enable-ossfuzz --disable-x86asm && make && make install
+
+安装方法2:（推荐）
+直接下载已经编译好的ffmpeg
+https://ffmpeg.zeranoe.com/builds/macos64/static/
+ffmpeg-latest-macos64-static
+cp ffmpeg-latest-macos64-static ~/Public
+echo 'export PATH="$PATH:~/Public/ffmpeg-latest-macos64-static/bin"' >> ~/.bash_profile
+
+
+～～～～～～～～ffmpeg命令参数：～～～～～～～～
+-formats  输出所有可用格式
+-f fmt  指定格式(音频或视频格式)
+-i filename 指定输入文件名，在linux下当然也能指定:0.0(屏幕录制)或摄像头
+-y  覆盖已有文件
+-t duration 记录时长为t
+-fs limit_size  设置文件大小上限
+-ss time_off  从指定的时间(s)开始， [-]hh:mm:ss[.xxx]的格式也支持
+-itsoffset time_off 设置时间偏移(s)，该选项影响所有后面的输入文件。该偏移被加到输入文件的时戳，定义一个正偏移意味着相应的流被延迟了 offset秒。 [-]hh:mm:ss[.xxx]的格式也支持
+-title string 标题
+-timestamp time 时间戳
+-author string  作者
+-copyright string 版权信息
+-comment string 评论
+-album string album名
+-v verbose  与log相关的
+-target type  设置目标文件类型("vcd", "svcd", "dvd", "dv", "dv50", "pal-vcd", "ntsc-svcd", ...)
+-dframes number 设置要记录的帧数
+视频选项:
+-b （音频：-b:a     视频： - b:v） 指定比特率(bits/s)，似乎ffmpeg是自动VBR的，指定了就大概是平均比特率
+-bitexact 使用标准比特率
+-vb 指定视频比特率(bits/s)
+-vframes number 设置转换多少桢(frame)的视频
+-r rate 帧速率(fps) （可以改，确认非标准桢率会导致音画不同步，所以只能设定为15或者29.97）
+-s size 指定分辨率 (320x240)
+-aspect aspect  设置视频长宽比(4:3, 16:9 or 1.3333, 1.7777)
+-croptop size 设置顶部切除尺寸(in pixels)
+-cropbottom size  设置底部切除尺寸(in pixels)
+-cropleft size  设置左切除尺寸 (in pixels)
+-cropright size 设置右切除尺寸 (in pixels)
+-padtop size  设置顶部补齐尺寸(in pixels)
+-padbottom size 底补齐(in pixels)
+-padleft size 左补齐(in pixels)
+-padright size  右补齐(in pixels)
+-padcolor color 补齐带颜色(000000-FFFFFF)
+-vn 取消视频
+-vcodec codec 强制使用codec编解码方式('copy' to copy stream)
+-sameq  使用同样视频质量作为源（VBR）
+-pass n 选择处理遍数（1或者2）。两遍编码非常有用。第一遍生成统计信息，第二遍生成精确的请求的码率
+-passlogfile file 选择两遍的纪录文件名为file
+-newvideo 在现在的视频流后面加入新的视频流
+ 
+高级视频选项
+-pix_fmt format set pixel format, 'list' as argument shows all the pixel formats supported
+-intra  仅适用帧内编码
+-qscale q 以<数值>质量为基础的VBR，取值0.01-255，约小质量越好
+-loop_input 设置输入流的循环数(目前只对图像有效)
+-loop_output  设置输出视频的循环数，比如输出gif时设为0表示无限循环
+-g int  设置图像组大小
+-cutoff int 设置截止频率
+-qmin int 设定最小质量，与-qmax（设定最大质量）共用，比如-qmin 10 -qmax 31
+-qmax int 设定最大质量
+-qdiff int  量化标度间最大偏差 (VBR)
+-bf int 使用frames B 帧，支持mpeg1,mpeg2,mpeg4
+音频选项:
+-ab (等效 -b:a )设置比特率(单位：bit/s，也许老版是kb/s)前面-ac设为立体声时要以一半比特率来设置，比如192kbps的就设成96，转换 默认比特率都较小，要听到较高品质声音的话建议设到160kbps（80）以上。
+-aframes number 设置转换多少桢(frame)的音频
+-aq quality 设置音频质量 (指定编码)
+-ar rate  设置音频采样率 (单位：Hz)，PSP只认24000
+-ac channels  设置声道数，1就是单声道，2就是立体声，转换单声道的TVrip可以用1（节省一半容量），高品质的DVDrip就可以用2
+-an 取消音频
+-acodec codec 指定音频编码('copy' to copy stream)
+-vol volume 设置录制音量大小(默认为256) <百分比> ，某些DVDrip的AC3轨音量极小，转换时可以用这个提高音量，比如200就是原来的2倍
+-newaudio 在现在的音频流后面加入新的音频流
+字幕选项:
+-sn 取消字幕
+-scodec codec 设置字幕编码('copy' to copy stream)
+-newsubtitle  在当前字幕后新增
+-slang code 设置字幕所用的ISO 639编码(3个字母)
+Audio/Video 抓取选项:
+-vc channel 设置视频捕获通道(只对DV1394)
+-tvstd standard 设
+
+
+-vn 跳过video设置
+-an 跳过audio设置
+-sn 跳过subtitles设置
+-dn 跳过data设置
+
+
+可用的bit流 ：ffmpeg –bsfs
+
+可用的编解码器：ffmpeg –codecs
+
+可用的解码器：ffmpeg –decoders
+
+可用的编码器：ffmpeg –encoders
+
+可用的过滤器：ffmpeg –filters
+
+可用的视频格式：ffmpeg –formats
+
+可用的声道布局：ffmpeg –layouts
+
+可用的license：ffmpeg –L
+
+可用的像素格式：ffmpeg –pix_fmts
+
+可用的协议：ffmpeg -protocals
+
+～～～～～～～～基本知识点：～～～～～～～～
+帧率：帧率也叫帧频率，帧率是视频文件中每一秒的帧数，肉眼想看到连续移动图像至少需要15帧。
+
+码率：比特率(也叫码率，数据率)是一个确定整体视频/音频质量的参数，秒为单位处理的字节数，码率和视频质量成正比，在视频文件中中比特率用bps来表达。
+
+FFmpeg官网： http://www.ffmpeg.org
+FFmpeg doc : http://www.ffmpeg.org/documentation.html
+FFmpeg wiki : https://trac.ffmpeg.org/wiki
+
+https://trac.ffmpeg.org/wiki/Projects
+ffmpeg工程集合
+
+
+～～～～～～～～增加黑边～～～～～～～～
+使用FFmpeg给视频增加黑边需要用到 pad 这个滤镜，具体用法如下：
+   -vf pad=1280:720:0:93:black
+
+按照从左到右的顺序依次为:
+​   “宽”、“高”、“X坐标”和“Y坐标”，宽和高指的是输入视频尺寸（包含加黑边的尺寸），XY指的是视频所在位置。
+​
+比如一个输入视频尺寸是1280x534的源，想要加上黑边变成1280x720，那么用上边的语法可以实现，93是这样得来的，（720-534）/2。
+​
+如果视频原始1920x800的话，完整的语法应该是：
+   -vf 'scale=1280:534,pad=1280:720:0:93:black'
+
+先将视频缩小到1280x534，然后在加入黑边变成1280x720，将1280x534的视频放置在x=0，y=93的地方，
+​FFmpeg会自动在上下增加93像素的黑边。
+注：black可以不写，默认是黑色
+
+～～～～～～～～(倍速)速度设置～～～～～～～～
+音频速度  -vf atempo
+视频速度  -af setpts
+
+3倍视频 -vf setpts=PTS/2 或者 -vf setpts=PTS*0.5
+0.5倍视频 -vf setpt=2*PTS
+2倍音频 -af atempo=2
+0.5倍音频 -af atempo=0.5
+4倍音频 -filter:"atempo=2.0,atempo=2.0"
+同时对视频和音频倍速播放 -filter_complex "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]"
+
+
+～～～～～～～～输出格式～～～～～～～～
+支持格式
+ffmpeg -formats
+
+ D. = Demuxing supported
+ .E = Muxing supported
+ --
+ D  3dostr          3DO STR
+  E 3g2             3GP2 (3GPP2 file format)
+  E 3gp             3GP (3GPP file format)
+ D  4xm             4X Technologies
+  E a64             a64 - video for Commodore 64
+ D  aa              Audible AA format files
+ D  aac             raw ADTS AAC (Advanced Audio Coding)
+ DE ac3             raw AC-3
+ D  acm             Interplay ACM
+ D  act             ACT Voice file format
+ D  adf             Artworx Data Format
+ D  adp             ADP
+ D  ads             Sony PS2 ADS
+  E adts            ADTS AAC (Advanced Audio Coding)
+ DE adx             CRI ADX
+ D  aea             MD STUDIO audio
+ D  afc             AFC
+ DE aiff            Audio IFF
+ D  aix             CRI AIX
+ DE alaw            PCM A-law
+ D  alias_pix       Alias/Wavefront PIX image
+ DE amr             3GPP AMR
+ D  amrnb           raw AMR-NB
+ D  amrwb           raw AMR-WB
+ D  anm             Deluxe Paint Animation
+ D  apc             CRYO APC
+ D  ape             Monkey's Audio
+ DE apng            Animated Portable Network Graphics
+ DE aptx            raw aptX (Audio Processing Technology for Bluetooth)
+ DE aptx_hd         raw aptX HD (Audio Processing Technology for Bluetooth)
+ D  aqtitle         AQTitle subtitles
+ DE asf             ASF (Advanced / Active Streaming Format)
+ D  asf_o           ASF (Advanced / Active Streaming Format)
+  E asf_stream      ASF (Advanced / Active Streaming Format)
+ DE ass             SSA (SubStation Alpha) subtitle
+ DE ast             AST (Audio Stream)
+ DE au              Sun AU
+ D  avfoundation    AVFoundation input device
+ DE avi             AVI (Audio Video Interleaved)
+  E avm2            SWF (ShockWave Flash) (AVM2)
+ D  avr             AVR (Audio Visual Research)
+ D  avs             Argonaut Games Creature Shock
+ DE avs2            raw AVS2-P2/IEEE1857.4 video
+ D  bethsoftvid     Bethesda Softworks VID
+ D  bfi             Brute Force & Ignorance
+ D  bfstm           BFSTM (Binary Cafe Stream)
+ D  bin             Binary text
+ D  bink            Bink
+ DE bit             G.729 BIT file format
+ D  bmp_pipe        piped bmp sequence
+ D  bmv             Discworld II BMV
+ D  boa             Black Ops Audio
+ D  brender_pix     BRender PIX image
+ D  brstm           BRSTM (Binary Revolution Stream)
+ D  c93             Interplay C93
+ DE caf             Apple CAF (Core Audio Format)
+ DE cavsvideo       raw Chinese AVS (Audio Video Standard) video
+ D  cdg             CD Graphics
+ D  cdxl            Commodore CDXL video
+ D  cine            Phantom Cine
+ DE codec2          codec2 .c2 muxer
+ DE codec2raw       raw codec2 muxer
+ D  concat          Virtual concatenation script
+  E crc             CRC testing
+ DE dash            DASH Muxer
+ DE data            raw data
+ DE daud            D-Cinema audio
+ D  dcstr           Sega DC STR
+ D  dds_pipe        piped dds sequence
+ D  dfa             Chronomaster DFA
+ D  dhav            Video DAV
+ DE dirac           raw Dirac
+ DE dnxhd           raw DNxHD (SMPTE VC-3)
+ D  dpx_pipe        piped dpx sequence
+ D  dsf             DSD Stream File (DSF)
+ D  dsicin          Delphine Software International CIN
+ D  dss             Digital Speech Standard (DSS)
+ DE dts             raw DTS
+ D  dtshd           raw DTS-HD
+ DE dv              DV (Digital Video)
+ D  dvbsub          raw dvbsub
+ D  dvbtxt          dvbtxt
+  E dvd             MPEG-2 PS (DVD VOB)
+ D  dxa             DXA
+ D  ea              Electronic Arts Multimedia
+ D  ea_cdata        Electronic Arts cdata
+ DE eac3            raw E-AC-3
+ D  epaf            Ensoniq Paris Audio File
+ D  exr_pipe        piped exr sequence
+ DE f32be           PCM 32-bit floating-point big-endian
+ DE f32le           PCM 32-bit floating-point little-endian
+  E f4v             F4V Adobe Flash Video
+ DE f64be           PCM 64-bit floating-point big-endian
+ DE f64le           PCM 64-bit floating-point little-endian
+ DE ffmetadata      FFmpeg metadata in text
+  E fifo            FIFO queue pseudo-muxer
+  E fifo_test       Fifo test muxer
+ DE film_cpk        Sega FILM / CPK
+ DE filmstrip       Adobe Filmstrip
+ DE fits            Flexible Image Transport System
+ DE flac            raw FLAC
+ D  flic            FLI/FLC/FLX animation
+ DE flv             FLV (Flash Video)
+  E framecrc        framecrc testing
+  E framehash       Per-frame hash testing
+  E framemd5        Per-frame MD5 testing
+ D  frm             Megalux Frame
+ D  fsb             FMOD Sample Bank
+ DE g722            raw G.722
+ DE g723_1          raw G.723.1
+ DE g726            raw big-endian G.726 ("left-justified")
+ DE g726le          raw little-endian G.726 ("right-justified")
+ D  g729            G.729 raw format demuxer
+ D  gdv             Gremlin Digital Video
+ D  genh            GENeric Header
+ DE gif             CompuServe Graphics Interchange Format (GIF)
+ D  gif_pipe        piped gif sequence
+ DE gsm             raw GSM
+ DE gxf             GXF (General eXchange Format)
+ DE h261            raw H.261
+ DE h263            raw H.263
+ DE h264            raw H.264 video
+  E hash            Hash testing
+ D  hcom            Macintosh HCOM
+  E hds             HDS Muxer
+ DE hevc            raw HEVC video
+ DE hls             Apple HTTP Live Streaming
+ D  hnm             Cryo HNM v4
+ DE ico             Microsoft Windows ICO
+ D  idcin           id Cinematic
+ D  idf             iCE Draw File
+ D  iff             IFF (Interchange File Format)
+ D  ifv             IFV CCTV DVR
+ DE ilbc            iLBC storage
+ DE image2          image2 sequence
+ DE image2pipe      piped image2 sequence
+ D  ingenient       raw Ingenient MJPEG
+ D  ipmovie         Interplay MVE
+  E ipod            iPod H.264 MP4 (MPEG-4 Part 14)
+ DE ircam           Berkeley/IRCAM/CARL Sound Format
+  E ismv            ISMV/ISMA (Smooth Streaming)
+ D  iss             Funcom ISS
+ D  iv8             IndigoVision 8000 video
+ DE ivf             On2 IVF
+ D  ivr             IVR (Internet Video Recording)
+ D  j2k_pipe        piped j2k sequence
+ DE jacosub         JACOsub subtitle format
+ D  jpeg_pipe       piped jpeg sequence
+ D  jpegls_pipe     piped jpegls sequence
+ D  jv              Bitmap Brothers JV
+ D  kux             KUX (YouKu)
+  E latm            LOAS/LATM
+ D  lavfi           Libavfilter virtual input device
+ D  live_flv        live RTMP FLV (Flash Video)
+ D  lmlm4           raw lmlm4
+ D  loas            LOAS AudioSyncStream
+ DE lrc             LRC lyrics
+ D  lvf             LVF
+ D  lxf             VR native stream (LXF)
+ DE m4v             raw MPEG-4 video
+  E matroska        Matroska
+ D  matroska,webm   Matroska / WebM
+  E md5             MD5 testing
+ D  mgsts           Metal Gear Solid: The Twin Snakes
+ DE microdvd        MicroDVD subtitle format
+ DE mjpeg           raw MJPEG video
+ D  mjpeg_2000      raw MJPEG 2000 video
+  E mkvtimestamp_v2 extract pts as timecode v2 format, as defined by mkvtoolnix
+ DE mlp             raw MLP
+ D  mlv             Magic Lantern Video (MLV)
+ D  mm              American Laser Games MM
+ DE mmf             Yamaha SMAF
+  E mov             QuickTime / MOV
+ D  mov,mp4,m4a,3gp,3g2,mj2 QuickTime / MOV
+  E mp2             MP2 (MPEG audio layer 2)
+ DE mp3             MP3 (MPEG audio layer 3)
+  E mp4             MP4 (MPEG-4 Part 14)
+ D  mpc             Musepack
+ D  mpc8            Musepack SV8
+ DE mpeg            MPEG-1 Systems / MPEG program stream
+  E mpeg1video      raw MPEG-1 video
+  E mpeg2video      raw MPEG-2 video
+ DE mpegts          MPEG-TS (MPEG-2 Transport Stream)
+ D  mpegtsraw       raw MPEG-TS (MPEG-2 Transport Stream)
+ D  mpegvideo       raw MPEG video
+ DE mpjpeg          MIME multipart JPEG
+ D  mpl2            MPL2 subtitles
+ D  mpsub           MPlayer subtitles
+ D  msf             Sony PS3 MSF
+ D  msnwctcp        MSN TCP Webcam stream
+ D  mtaf            Konami PS2 MTAF
+ D  mtv             MTV
+ DE mulaw           PCM mu-law
+ D  musx            Eurocom MUSX
+ D  mv              Silicon Graphics Movie
+ D  mvi             Motion Pixels MVI
+ DE mxf             MXF (Material eXchange Format)
+  E mxf_d10         MXF (Material eXchange Format) D-10 Mapping
+  E mxf_opatom      MXF (Material eXchange Format) Operational Pattern Atom
+ D  mxg             MxPEG clip
+ D  nc              NC camera feed
+ D  nistsphere      NIST SPeech HEader REsources
+ D  nsp             Computerized Speech Lab NSP
+ D  nsv             Nullsoft Streaming Video
+  E null            raw null video
+ DE nut             NUT
+ D  nuv             NuppelVideo
+  E oga             Ogg Audio
+ DE ogg             Ogg
+  E ogv             Ogg Video
+ DE oma             Sony OpenMG audio
+  E opus            Ogg Opus
+ D  paf             Amazing Studio Packed Animation File
+ D  pam_pipe        piped pam sequence
+ D  pbm_pipe        piped pbm sequence
+ D  pcx_pipe        piped pcx sequence
+ D  pgm_pipe        piped pgm sequence
+ D  pgmyuv_pipe     piped pgmyuv sequence
+ D  pictor_pipe     piped pictor sequence
+ D  pjs             PJS (Phoenix Japanimation Society) subtitles
+ D  pmp             Playstation Portable PMP
+ D  png_pipe        piped png sequence
+ D  ppm_pipe        piped ppm sequence
+ D  psd_pipe        piped psd sequence
+  E psp             PSP MP4 (MPEG-4 Part 14)
+ D  psxstr          Sony Playstation STR
+ D  pva             TechnoTrend PVA
+ D  pvf             PVF (Portable Voice Format)
+ D  qcp             QCP
+ D  qdraw_pipe      piped qdraw sequence
+ D  r3d             REDCODE R3D
+ DE rawvideo        raw video
+ D  realtext        RealText subtitle format
+ D  redspark        RedSpark
+ D  rl2             RL2
+ DE rm              RealMedia
+ DE roq             raw id RoQ
+ D  rpl             RPL / ARMovie
+ D  rsd             GameCube RSD
+ DE rso             Lego Mindstorms RSO
+ DE rtp             RTP output
+  E rtp_mpegts      RTP/mpegts output format
+ DE rtsp            RTSP output
+ DE s16be           PCM signed 16-bit big-endian
+ DE s16le           PCM signed 16-bit little-endian
+ DE s24be           PCM signed 24-bit big-endian
+ DE s24le           PCM signed 24-bit little-endian
+ DE s32be           PCM signed 32-bit big-endian
+ DE s32le           PCM signed 32-bit little-endian
+ D  s337m           SMPTE 337M
+ DE s8              PCM signed 8-bit
+ D  sami            SAMI subtitle format
+ DE sap             SAP output
+ DE sbc             raw SBC
+ D  sbg             SBaGen binaural beats script
+ DE scc             Scenarist Closed Captions
+  E sdl,sdl2        SDL2 output device
+ D  sdp             SDP
+ D  sdr2            SDR2
+ D  sds             MIDI Sample Dump Standard
+ D  sdx             Sample Dump eXchange
+  E segment         segment
+ D  ser             SER (Simple uncompressed video format for astronomical capturing)
+ D  sgi_pipe        piped sgi sequence
+ D  shn             raw Shorten
+ D  siff            Beam Software SIFF
+  E singlejpeg      JPEG single image
+ D  sln             Asterisk raw pcm
+ DE smjpeg          Loki SDL MJPEG
+ D  smk             Smacker
+  E smoothstreaming Smooth Streaming Muxer
+ D  smush           LucasArts Smush
+ D  sol             Sierra SOL
+ DE sox             SoX native
+ DE spdif           IEC 61937 (used on S/PDIF - IEC958)
+  E spx             Ogg Speex
+ DE srt             SubRip subtitle
+ D  stl             Spruce subtitle format
+  E stream_segment,ssegment streaming segment muxer
+  E streamhash      Per-stream hash testing
+ D  subviewer       SubViewer subtitle format
+ D  subviewer1      SubViewer v1 subtitle format
+ D  sunrast_pipe    piped sunrast sequence
+ DE sup             raw HDMV Presentation Graphic Stream subtitles
+ D  svag            Konami PS2 SVAG
+  E svcd            MPEG-2 PS (SVCD)
+ D  svg_pipe        piped svg sequence
+ DE swf             SWF (ShockWave Flash)
+ D  tak             raw TAK
+ D  tedcaptions     TED Talks captions
+  E tee             Multiple muxer tee
+ D  thp             THP
+ D  tiertexseq      Tiertex Limited SEQ
+ D  tiff_pipe       piped tiff sequence
+ D  tmv             8088flex TMV
+ DE truehd          raw TrueHD
+ DE tta             TTA (True Audio)
+ D  tty             Tele-typewriter
+ D  txd             Renderware TeXture Dictionary
+ D  ty              TiVo TY Stream
+ DE u16be           PCM unsigned 16-bit big-endian
+ DE u16le           PCM unsigned 16-bit little-endian
+ DE u24be           PCM unsigned 24-bit big-endian
+ DE u24le           PCM unsigned 24-bit little-endian
+ DE u32be           PCM unsigned 32-bit big-endian
+ DE u32le           PCM unsigned 32-bit little-endian
+ DE u8              PCM unsigned 8-bit
+  E uncodedframecrc uncoded framecrc testing
+ D  v210            Uncompressed 4:2:2 10-bit
+ D  v210x           Uncompressed 4:2:2 10-bit
+ D  vag             Sony PS2 VAG
+ DE vc1             raw VC-1 video
+ DE vc1test         VC-1 test bitstream
+  E vcd             MPEG-1 Systems / MPEG program stream (VCD)
+ DE vidc            PCM Archimedes VIDC
+ D  vividas         Vividas VIV
+ D  vivo            Vivo
+ D  vmd             Sierra VMD
+  E vob             MPEG-2 PS (VOB)
+ D  vobsub          VobSub subtitle format
+ DE voc             Creative Voice
+ D  vpk             Sony PS2 VPK
+ D  vplayer         VPlayer subtitles
+ D  vqf             Nippon Telegraph and Telephone Corporation (NTT) TwinVQ
+ DE w64             Sony Wave64
+ DE wav             WAV / WAVE (Waveform Audio)
+ D  wc3movie        Wing Commander III movie
+  E webm            WebM
+  E webm_chunk      WebM Chunk Muxer
+ DE webm_dash_manifest WebM DASH Manifest
+  E webp            WebP
+ D  webp_pipe       piped webp sequence
+ DE webvtt          WebVTT subtitle
+ D  wsaud           Westwood Studios audio
+ D  wsd             Wideband Single-bit Data (WSD)
+ D  wsvqa           Westwood Studios VQA
+ DE wtv             Windows Television (WTV)
+ DE wv              raw WavPack
+ D  wve             Psion 3 audio
+ D  xa              Maxis XA
+ D  xbin            eXtended BINary text (XBIN)
+ D  xmv             Microsoft XMV
+ D  xpm_pipe        piped xpm sequence
+ D  xvag            Sony PS3 XVAG
+ D  xwd_pipe        piped xwd sequence
+ D  xwma            Microsoft xWMA
+ D  yop             Psygnosis YOP
+ DE yuv4mpegpipe    YUV4MPEG pipe
+
+
+
+～～～～～～～～bilibili m4s转mp4～～～～～～～～
+ffmpeg -i video.m4s -i audio.m4s -c:v copy -strict experimental 结构式与建筑师.mp4
+
+
+-f [fmt]
+截图 -f image2
+
+每隔一秒截一张图
+ffmpeg -i input.flv -f image2 -vf fps=fps=1 out%d.png
+每隔20秒截一张图
+ffmpeg -i input.flv -f image2 -vf fps=fps=1/20 out%d.png
+
+～～～～～～～～HLS～～～～～～～～
+-f segment 切片生成HLS
+EXT-X-TARGETDURATION用来表示每个TS分片间隔
+EXT-X-MEDIA-SEQUENCE用来表示当前列表中第一个播放的媒体序列号
+EXTINF则表示当前TS分片所播放的时常。
+参考RFC规则https://tools.ietf.org/html/rfc8216
+
+将mp4转换成hls
+ffmpeg -y -fflags nobuffer -i 3.mp4 -c:v copy -c:a copy -f segment  index.m3u8
+
+ffmpeg -i input.mp4 -profile:v baseline -level 3.0 -s 640x360 -start_number 0 -hls_time 10 -hls_list_size 0 -f hls index.m3u8
+
+保存hls转换为mp4
+ffmpeg -i https://vs1.baduziyuan.com/20171208/zpUpBU64/index.m3u8 -acodec copy -vcodec copy 非诚勿扰2008.mp4
+
+～～～～～～～～DASH～～～～～～～～
+-f dash 切片生成DASH
+ffmpeg -i 3.mp4 -c copy -f dash 3/index.mpd
+使用规则https://ffmpeg.org/ffmpeg-formats.html#dash-2
+window_size 默认值：int:0 — 取值范围：[0, int_max]
+--清单中保留的最大段数
+
+extra_window_size 默认值：int:5 — 取值范围：[0, int_max]
+--从磁盘中删除之前保留在清单外部的最大段数
+
+min_seg_duration 默认值：int64:5000000 取值范围：[0, int_max]
+--最小段持续时间（以微秒为单位）
+--默认值:5s
+
+remove_at_exit默认值：bool:0 – 取值范围：[0, 1]
+--完成后删除所有段
+
+use_template默认值：bool:1 – 取值范围：[0, 1]
+--使用SegmentTemplate而不是SegmentList
+--如single_file:1 会被置0
+
+use_timeline 默认值：bool:1 – 取值范围：[0, 1]
+--在SegmentTemplate中使用SegmentTimeline
+--manifest中startNumber、timescale与之相关
+
+single_file默认值：bool:0 – 取值范围：[0, 1]
+--将所有段存储在一个文件中，使用字节范围访问
+--以单一文件存储：以byte range表示
+
+single_file_name
+--用于baseURL的DASH模板名称。意味着将single_file设置为“1”。
+
+init_seg_name
+--用于初始化段的DASH模板名称。默认为“init-stream $ RepresentationID $ .m4s”
+
+media_seg_name
+--用于媒体段的DASH模板名称。默认为“chunk-stream $ RepresentationID $ - $ Number％05d $ .m4s”
+
+streaming streaming
+--块输出模式的输出。在块流模式中，每个帧将是形成块的moof片段。
+
+adaptation_sets
+--将流分配给AdaptationSets。 语法是“id = x，streams = a，b，c id = y，streams = d，e”，其中x和y是适应集的ID，a，b，c，d和e是指数的索引。 映射流。 为了将所有视频（或音频）流映射到AdaptationSet，“v”（或“a”）可以用作流标识符而不是ID。 如果未定义任何分配，则默认为每个流的AdaptationSet。
+
+timeout
+--设置套接字I / O操作的超时。仅适用于HTTP输出。
+
+
+～～～～～～～～直播流～～～～～～～～
+1. 将文件当做直播送至live 
+ffmpeg -re -i localFile.mp4 -c copy -f flv rtmp://server/live/streamName 
+ffmpeg -i media/3.mp4 -c copy  -f flv rtmp://127.0.0.1/live/3
+
+2. 将一个直播流，视频改用h264压缩，音频改用faac压缩，送至另外一个直播服务流
+ffmpeg -i rtmp://server/live/originalStream -c:a libfaac -ar 44100 -ab 48k -c:v libx264 -vpre slow -vpre baseline -f flv rtmp://server/live/h264Stream 
+
+3. 将一个直播流，视频不变，音频改用faac压缩，送至另外一个直播服务流
+ffmpeg -i rtmp://server/live/originalStream -acodec libfaac -ar 44100 -ab 48k -vcodec copy -f flv rtmp://server/live/h264_AAC_Stream 
+
+4. 将直播媒体保存至本地文件
+ffmpeg -i rtmp://server/live/streamName -c copy dump.flv 
+ffmpeg –i rtsp://192.168.3.205:5555/test –vcodec copy out.avi
+
+5. 将一个高清流，复制为几个不同视频清晰度的流重新发布，其中音频不变
+ffmpeg -re -i rtmp://server/live/high_FMLE_stream -acodec copy -vcodec x264lib -s 640×360 -b 500k -vpre medium -vpre baseline rtmp://server/live/baseline_500k -acodec copy -vcodec x264lib -s 480×272 -b 300k -vpre medium -vpre baseline rtmp://server/live/baseline_300k -acodec copy -vcodec x264lib -s 320×200 -b 150k -vpre medium -vpre baseline rtmp://server/live/baseline_150k -acodec libfaac -vn -ab 48k rtmp://server/live/audio_only_AAC_48k 
+
+6. 将当前摄像头及音频通过DSSHOW采集，视频h264、音频faac压缩后发布
+ffmpeg -r 25 -f dshow -s 640×480 -i video=”video source name”:audio=”audio source name” -vcodec libx264 -b 600k -vpre slow -acodec libfaac -ab 128k -f flv rtmp://server/application/stream_name
+
+～～～～～～～～网络摄像机 rtsp流～～～～～～～～
+rtsp流转推rtmp直播(有丢包情况)
+ffmpeg -i rtsp://ip address/original -crf 30 -preset ultrafast -acodec aac -strict experimental -ar 44100 -ac 2 -b:a 96k -vcodec libx264 -r 25 -b:v 500k -s 640*480 -f flv rtmp://ip address/live/stram
+
+～～～～～～～～过滤（滤波）～～～～～～～～
+简单滤波  -filter
+混合滤波  -filter_complex 
+vf = video filter
+af = audio filter
+
+～～～～～～～～视频打马赛克～～～～～～～～
+1.用多个输入文件创建一个马赛克视频
+ffmpeg -i jidu.mp4 -i jidu.flv -i "Day By Day SBS.mp4" -i "Dangerous.mp4" -filter_complex "nullsrc=size=640x480 [base]; [0:v] setpts=PTS-STARTPTS, scale=320x240 [upperleft]; [1:v] setpts=PTS-STARTPTS, scale=320x240 [upperright]; [2:v] setpts=PTS-STARTPTS, scale=320x240 [lowerleft]; [3:v] setpts=PTS-STARTPTS, scale=320x240 [lowerright]; [base][upperleft] overlay=shortest=1 [tmp1]; [tmp1][upperright] overlay=shortest=1:x=320 [tmp2]; [tmp2][lowerleft] overlay=shortest=1:y=240 [tmp3]; [tmp3][lowerright] overlay=shortest=1:x=320:y=240" -c:v libx264 output.mkv
+
+～～～～～～～～Logo～～～～～～～～
+2秒后logo从左到右移动：
+ffmpeg -i jidu.mp4  -vf movie=logo.png[logo];[in][logo]overlay=x='if(gte(t\,2)\,((t-2)*80)-w\,NAN)':y=0
+2秒后logo从左到右移动后停止在左上角
+ffmpeg -i jidu.mp4  -vf movie=logo.png[logo];[in][logo]overlay=x='if(gte(((t-2)*80)-w\,W)\,0\,((t-2)*80)-w)':y=0
+每隔10秒交替出现logo。
+ffmpeg -y -t 60 -i jidu.mp4 -i logo.png -i logo2.png -filter_complex "overlay=x=if(lt(mod(t\,20)\,10)\,10\,NAN ):y=10,overlay=x=if(gt(mod(t\,20)\,10)\,W-w-10\,NAN ) :y=10" overlay.mp4
+添加logo
+ffmpeg -i input.mp4 -i logo.png -filter_complex overlay output.mp4 
+
+～～～～～～～～删除logo～～～～～～～～
+-vf delogo=x:y:w:h[:t[:show]] 删除logo
+x:y 离左上角的坐标
+w:h  logo的宽和高
+t: 矩形边缘的厚度默认值4
+show：若设置为1有一个绿色的矩形，默认值0.
+
+～～～～～～～～缩略图～～～～～～～～
+生成缩略图
+ffmpeg -i "test.avi" -y -f image2 -ss 8 -t 0.001 -s 350x240 'test.jpg' 
+多张截图合并到一个文件里（2x3） ?每隔一千帧(秒数=1000/fps25)即40s截一张图(注意：ffmpeg version N-57961-gec8e68c版本最多可以每隔20s截一张图。)
+ffmpeg -i jidu.mp4 -frames 3 -vf "select=not(mod(n\,1000)),scale=320:240,tile=2x3" out.png
+
+～～～～～～～～修改尺寸～～～～～～～～
+宽度固定400，高度自适应
+ffmpeg -i input.avi -vf scale=400:400/a
+ffmpeg -i input.avi -vf scale=400:-1
+高度固定300，宽度自适应
+ffmpeg -i input.avi -vf scale=-1:300
+ffmpeg -i input.avi -vf scale=300*a:300
+源视频宽度，高度都缩小一半
+ffmpeg -i input.mpg -vf scale=iw/2:ih/2 output.mp4 
+源视频宽度，高度都缩小到90%
+ffmpeg -i input.mpg -vf scale=iw*0.9:ih*0.9 output.mp4
+源视频宽度，高度都扩大到原来的两倍
+ffmpeg -i jidu.mp4 -t 10 -vf pad=2*iw output.mp4
+
+
+～～～～～～～～翻转，旋转，覆盖～～～～～～～～（和视频一样图片同样能翻转，旋转和覆盖）
+翻转
+-vf hflip 水平翻转
+-vf vflip 垂直翻转语法
+水平翻转
+ffmpeg -i jidu.mp4 -t 10 -vf hflip output2.mp4
+ffmpeg -i orange.jpg -vf hflip orange_hfilp.jpg
+ffmpeg -i orange.jpg -vf vflip orange_vfilp.jpg
+
+旋转
+transpose={0,1,2,3} 旋转
+0:逆时针旋转90°然后垂直翻转
+1:顺时针旋转90°
+2:逆时针旋转90°
+3:顺时针旋转90°然后水平翻转
+ffmpeg -i image.png -vf transpose=1 image_rotated.png
+
+覆盖
+overlay[=x[:y]
+所有的参数都是可选，默认值都是0
+ffmpeg -f lavfi -i rgbtestsrc -s 400x300 rgb.png 
+ffmpeg -f lavfi -i smptebars smpte.png 
+smpte在rgb正中间
+ffmpeg -i rgb.png -i smpte.png -filter_complex overlay=(W-w)/2:(H-h)/2  rgb_smpte.png
+Logo在左上角
+ffmpeg -i pair.mp4 -i logo.png -filter_complex overlay pair1.mp4 
+Logo在右上角
+ffmpeg -i pair.mp4 -i logo.png -filter_complex overlay=W-w  pair2.mp4 
+Logo在左下角
+ffmpeg -i pair.mp4 -i logo.png -filter_complex overlay=0:H-h  pair2.mp4 
+Logo在右下角
+ffmpeg -i pair.mp4 -i logo.png -filter_complex overlay=W-w:H-h  pair2.mp4 
+
+
+～～～～～～～～裁剪～～～～～～～～
+裁剪帧的中心 当我们想裁剪区域在帧的中间时，裁剪filter可以跳过输入x和y值，他们的默认值是
+Xdefault  = ( input width - output width)/2 
+Ydefault  = ( input height - output height)/2
+ffmpeg -i input_file -v crop=w:h output_file 
+
+裁剪输入视频的左三分之一
+ffmpeg -i input -vf crop=iw/3:ih :0:0 output 
+中间三分之一
+ffmpeg -i input -vf crop=iw/3:ih :iw/3:0 output  
+右三分之一
+ffmpeg -i input -vf crop=iw/3:ih :iw/3*2:0 output 
+裁剪中间一半区域
+ffmpeg -i input.avi -vf crop=iw/2:ih/2 output.avi 
+
+
+～～～～～～～～模糊，锐化～～～～～～～～
+模糊
+boxblur=luma_r:luma_p[:chroma_r:chram_p[:alpha_r:alpha_p]]
+注意：luma_r和alpha_r半径取值范围是0~min(w,h)/2, chroma_r半径的取值范围是0~min(cw/ch)/2
+锐化
+-vf unsharp=l_msize_x:l_msize_y:l_amount:c_msize_x:c_msize_y:c_amount
+所有的参数是可选的，默认值是5:5:1.0:5:5:0.0
+l_msize_x:水平亮度矩阵，取值范围3-13，默认值为5
+l_msize_y:垂直亮度矩阵，取值范围3-13，默认值为5
+l_amount:亮度强度，取值范围-2.0-5.0，负数为模糊效果，默认值1.0
+c_msize_x:水平色彩矩阵，取值范围3-13，默认值5
+c_msize_y:垂直色彩矩阵，取值范围3-13，默认值5
+c_amount:色彩强度，取值范围-2.0-5.0，负数为模糊效果，默认值0.0
+
+～～～～～～～～文本～～～～～～～～
+添加文本
+drawtext=fontfile=font_f:text=text1[:p3=v3[:p4=v4[…]]]
+常用的参数值
+x：离左上角的横坐标
+y: 离左上角的纵坐标
+fontcolor：字体颜色
+fontsize：字体大小
+text:文本内容
+textfile:文本文件
+t：时间戳，单位秒
+n:帧数开始位置为0
+draw/enable:控制文件显示，若值为0不显示，1显示，可以使用函数
+
+在左上角添加Welcome文字
+color=c=white -vf drawtext=fontfile=arial.ttf:text=Welcom 
+在中央添加Good day
+-i color=c=white -vf drawtext="fontfile=arial.ttf:text='Goodday':x=(w-tw)/2:y=(h-th)/2" 
+设置字体颜色和大小
+-i color=c=white -vf drawtext="fontfile=arial.ttf:text='Happy Holidays':x=(w-tw)/2:y=(h-th)/2:fontcolor=green:fontsize=30" 
+
+动态文本
+用 t (时间秒)变量实现动态文本
+顶部水平滚动
+-vf drawtext="fontfile=arial.ttf:text='Dynamic RTL text':x=w-t*50:fontcolor=darkorange:fontsize=30" 
+底部水平滚动
+-vf drawtext="fontfile=arial.ttf:textfile=textfile.txt:x=w-t*50:y=h-th:fontcolor=darkorange:fontsize=30" 
+垂直从下往上滚动
+-vf drawtext="textfile=textfile:fontfile=arial.ttf:x=(w-tw)/2:y=h-t*100:fontcolor=white:fontsize=30“ 
+在右上角显示当前时间 
+-vf drawtext="fontfile=arial.ttf:x=w-tw:fontcolor=white:fontsize=30:text='%{localtime\:%H\\\:%M\\\:%S}'“ localtime
+每隔3秒显示一次当前时间
+-vf drawtext="fontfile=arial.ttf:x=w-tw:fontcolor=white:fontsize=30:text='%{localtime\:%H\\\:%M\\\:%S}':enable=lt(mod(t\,3)\,1)" 
+
+～～～～～～～～未整理～～～～～～～～
+
+ffmpeg -i soure -s 640x360 -r 25 
+
+
+ffmpeg -i output.mp4 -i output2.mp4 -filter_complex overlay=w compare.mp4 水平翻转视频覆盖output.mp4
+
+
+
+ffmpeg -i photo.jpg -vf pad=860:660:30:30:pink framed_photo.jpg 创建一个30个像素的粉色宽度来包围一个SVGA尺寸的图片：
+-vf pad=iw+60:ih+60:30:30:pink 同理可以制作testsrc视频用30个像素粉色包围视频
+
+高度被保持，宽度等于高度乘以16/9，x（输入文件水平位移）值由表达式(output_width - input_width)/2来计算。
+ffmpeg -i input -vf pad=ih*16/9:ih :(ow-iw)/2:0:color output 4：3到16:9的通用命令是：
+ffmpeg -i input -vf pad=iw :iw*3/4:0:(oh-ih)/2:color output 16:9到4:3的通用命令：
+
+
+
+
+
+FFmpeg支持绝大多数图片处理, 除LJPEG（无损JPEG）之外，其他都能被解码，除了EXR,PIC,PTX之外，所有的都能被编码。
+ffmpeg -ss 01:23:45 -i jidu.mp4 image.jpg 截取一张图片使用 –ss(seek from start)参数.
+ffmpeg -i jidu.mp4 -t 10 -pix_fmt rgb24 jidu.gif 从视频中生成GIF图片
+ffmpeg -i clip.avi frame%4d.jpg 转换视频为图片（每帧一张图）
+ffmpeg -f image2 -i img%4d.jpg -r 25 video.mp4 图片转换为视频
+
+和视频一样，图片也可以被裁剪和填充
+ffmpeg -f lavfi -i rgbtestsrc -vf crop=150:150 crop_rg.png 裁剪 
+ffmpeg -f lavfi -i smptebars -vf pad=360:280:20:20:orange pad_smpte.jpg 填充
+
+
+屏幕录像
+显示设备名称
+ffmpeg -list_devices 1 -f dshow -i dummy
+调用摄像头
+ffplay -f dshow  -i video="Integrated Camera"
+保存为文件
+ffmpeg -y -f dshow -s 320x240 -r 25 -i video="Integrated Camera" -b:v 800K -vcodec mpeg4 new.mp4
+
+ 添加字幕subtitles
+ 语法 –vf subtitles=file
+
+ ffmpeg -i jidu.mp4 -vf subtitles=rgb.srt output.mp4
+ 视频颤抖、色彩平衡
+视频颤抖
+ffplay –i jidu.mp4 -vf crop=in_w/2:in_h/2:(in_w-out_w)/2+((in_w-out_w)/2)*sin(n/10):(in_h-out_h)/2 +((in_h-out_h)/2)*sin(n/7)
+
+ 色彩平衡
+ ffplay -i jidu.mp4 -vf curves=vintage
+色彩变幻
+ffplay -i jidu.mp4 -vf hue="H=2*PI*t: s=sin(2*PI*t)+1“
+彩色转换黑白
+ffplay -i jidu.mp4 -vf lutyuv="u=128:v=128"
+
+
+ffmpeg -i input_file -vcodec copy -an output_file_video　　//分离视频流
+ffmpeg -i input_file -acodec copy -vn output_file_audio　　//分离音频流
+
+ffmpeg –i test.avi –r 1 –f image2 image-%3d.jpeg        //提取图片
+ffmpeg -ss 0:1:30 -t 0:0:20 -i input.avi -vcodec copy -acodec copy output.avi    //剪切视频
+
+
+ffmpeg.exe -i INPUT.jpg -an -vcodec libx264 -coder 1 -flags +loop -cmp +chroma -subq 10 -qcomp 0.6 -qmin 10 -qmax 51 -qdiff 4 -flags2 +dct8x8 -trellis 2 -partitions +parti8x8+parti4x4 -crf 24 -threads 0 -r 25 -g 25 -y OUTPUT.mp4 将一个JPG图片经过h264压缩循环输出为mp4视频
+
+ffmpeg -i rtmp://server/live/originalStream -c:a copy -c:v libx264 -vpre slow -f flv “rtmp://server/live/h264Stream live=1〃
+ 将普通流视频改用h264压缩，音频不变，送至高清流服务(新版本FMS live=1)
+
+ ffmpeg -t 10 -f vfwcap -i 0 -r 8 -f mp4 cap.mp4 采集usb摄像头视频命令：具体说明如下：我们采集10秒，采集设备为vfwcap类型设备，第0个vfwcap采集设备（如果系统有多个vfw的视频采集设备，可以通过-i num来选择），每秒8帧，输出方式为文件，格式为mp4。
+
+ffmpeg -f gdigrab -i desktop out.mpg  最简单的抓屏：
+
+ffmpeg -f gdigrab -framerate 5 -offset_x 10 -offset_y 20 -video_size 640x480 -i desktop out.mpg  从屏幕的（10,20）点处开始，抓取640x480的屏幕，设定帧率为5 ：
+
+ffmpeg -i capx.mp4 -t 10 -s 320x240 -pix_fmt rgb24 jidu1.gif ffmpeg从视频中生成gif图片：
+
+管道方式输出多路流
+./ffmpeg -i input -acodec aac -vcodec libx264 -f flv - | ffmpeg -f mpegts -i -c copy output1 c copy output2 -c copy output3
+如上，音频编码为AAC，视频编码为libx264，输出格式为FLV，输出之后通过管道传给另一条命令，执行对codec的copy从而实现一次编码多路输出：
+
+./ffmpeg -i input.mp4 -vcodec libx264 -acodec aac -f flv - | ffmpeg -f flv -i - -c copy -f flv rtmp://publish.chinaffmpeg.com/live/stream1 -c copy -f flv rtmp://publish.chinaffmpeg.com/live/stream2
+如上执行完后会在RTMP服务器中包含两路相同的直播流（stream1和strame2），可用FFmpeg验证如下：
+
+./ffmpeg -i rtmp://publish.chinaffmpeg.com/live/stream1  -i rtmp://publish.chinaffmpeg.com/live/stream2
+2、tee封装格式输出多路流
+FFmpeg输出时支持tee封装格式输出，使用-f tee方式制定输出格式：
+
+./ffmpeg -re -i  input.mp4 -vcodec libx264 -acodec aac -map 0 -f tee "[f=flv] rtmp://publish.chinaffmpeg.com/live/stream1 | [f=flv] rtmp://publish.chinaffmpeg.com/live/stream2"
+命令执行完成后，ffmpeg编码一次，输出tee封装格式，格式中包含两个FLV格式的RTMP直播流（stream1和strame2），可用FFmpeg验证如下：
+
+./ffmpeg -i rtmp://publish.chinaffmpeg.com/live/stream1  -i rtmp://publish.chinaffmpeg.com/live/stream2
+3、tee协议输出多路流
+./ffmpeg -re -i input.mp4 -vcodec libx264 -acodec aac -f flv "tee:rtmp://publish.chinaffmpeg.com/live/stream1|rtmp://publish.chinaffmpeg.com/live/stream2"
+如上，同样FFmpeg执行一次编码，但输出的是tee协议格式，tee中包含了两个子链接，均为RTMP直播流（stream1和strame2）。此方式为FFmpeg在3.1.3版本之后支持的，比第二种方式更加方便简单。
+
+ 1. 64Kbps音频编码
+          根据苹果有关HLS音频规定，不能使用音频流峰值超过64kbps的流，因此目前使用音频流为56kbps
+          命令如下：
+         ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4 -vn     \
+         -b:a 56000     \
+         -hls_time 10     \
+         -hls_list_size 0     \
+         -hls_allow_cache 1     \
+         -hls_base_url http://127.0.0.1:8080/audios/    \
+         -hls_segment_filename /Users/kuoxin/Movies/56K/'TI2014_56k_%05d.ts'     \
+         /Users/kuoxin/Movies/56K/56k_aac.m3u8
+     
+     2. 移动网络264Kbps视频编码
+          帧率：          12
+          尺寸：          416 x 234
+          码流：          264Kbps
+          视频：          200Kbps
+          音频：          56Kbps
+          音频采样：   48KHz
+          MP4 描述：  baseling3.0
+          时长：          10s
+ 
+          命令如下：
+          $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4   \
+          -c:v libx264  \
+          -r 12      \ 
+          -s 416X234       \
+          -b:v 200k       \
+          -profile:v baseline      \
+          -b:a 56k      \
+          -hls_time 10      \
+          -hls_list_size 0      \
+          -hls_allow_cache 1      \
+          -hls_base_url http://127.0.0.1:8080/videos/264k/       \
+          -hls_segment_filename /Users/kuoxin/Movies/264k/'TI2014_264k_%05d.ts’       \
+          /Users/kuoxin/Movies/264K/264k_mp4.m3u8 
+  
+3. 移动网络464Kbps视频编码
+          帧率：          15
+          尺寸：          480 x 270
+          码流：          464Kbps
+          视频：          400Kbps
+          音频：          56Kbps
+          音频采样：   48KHz
+          MP4 描述：  baseline
+          时长：          10s
+     $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4        \
+     -c:v libx264      \
+     -r 15       \
+     -s 480X270       \
+     -b:v 400k       \
+     -profile:v baseline      \
+     -b:a 56k      \
+     -hls_time 10      \
+     -hls_list_size 0      \
+     -hls_allow_cache 1      \
+     -hls_base_url http://127.0.0.1:8080/videos/464k/       \
+     -hls_segment_filename /Users/kuoxin/Movies/464k/'TI2014_464k_%05d.ts’      \
+      /Users/kuoxin/Movies/464K/464k_mp4.m3u8 
+  
+4. WiFi/CELL 664Kbps视频编码
+          帧率：          视频当前帧数
+          尺寸：          640 x 360
+          码流：          664Kbps
+          视频：          600Kbps
+          音频：          56Kbps
+          音频采样：   48KHz
+          MP4 描述：  baseline
+          时长：          10s
+     $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4        \
+     -c:v libx264      \
+     -s 640X360       \
+     -b:v 400k       \
+     -profile:v baseline      \
+     -b:a 56k      \
+     -hls_time 10      \
+     -hls_list_size 0      \
+     -hls_allow_cache 1      \
+     -hls_base_url http://127.0.0.1:8080/videos/664k/       \
+     -hls_segment_filename /Users/kuoxin/Movies/664k/'TI2014_464k_%05d.ts’      \
+      /Users/kuoxin/Movies/664K/664k_mp4.m3u8 
+  
+4. WiFi 1294Kbps视频编码
+          帧率：          视频当前帧数
+          尺寸：          640 x 360
+          码流：          1296Kbps
+          视频：          1200Kbps
+          音频：          96Kbps
+          音频采样：   48KHz
+          MP4 描述：  baseline
+          时长：          10s
+     $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4        \
+     -c:v libx264      \
+     -s 640X360       \
+     -b:v 1200k       \
+     -profile:v baseline      \
+     -b:a 96k      \
+     -hls_time 10      \
+     -hls_list_size 0      \
+     -hls_allow_cache 1      \
+     -hls_base_url http://127.0.0.1:8080/videos/1296k/       \
+     -hls_segment_filename /Users/kuoxin/Movies/1296k/'TI2014_1296k_%05d.ts’      \
+      /Users/kuoxin/Movies/1296K/1296k_mp4.m3u8 
+ 
+ 
+5. WiFi 3596Kbps视频编码
+          帧率：          视频当前帧数
+          尺寸：          960 x 540
+          码流：          3596Kbps (当前最高码流只有：1780Kbps)
+          视频：          3500Kbps(当前最高码流只有：1648Kbps)
+          音频：          96Kbps
+          音频采样：   48KHz
+          MP4 描述：  main
+          时长：          10s
+     $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4        \
+     -c:v libx264      \
+     -s 960X540       \
+     -b:a 128k          \
+     -hls_time 10      \
+     -hls_list_size 0      \
+     -hls_allow_cache 1      \
+     -hls_base_url http://127.0.0.1:8080/videos/3596k/       \
+     -hls_segment_filename /Users/kuoxin/Movies/3596k/'TI2014_3596k_%05d.ts’      \
+      /Users/kuoxin/Movies/3596K/3596k_mp4.m3u8 
+ 
+6. WiFi 5128Kbps视频编码
+          帧率：          视频当前帧数
+          尺寸：          1280 x 720
+          码流：          5128k (当前最高码流只有：1780Kbps)
+          视频：          5000Kbps(当前最高码流只有：1648Kbps)
+          音频：          128Kbps
+          音频采样：   48KHz
+          MP4 描述：  main
+          时长：          10s
+    
+  $ ffmpeg -i The.Interview.2014.BluRay.720p.x264.AAC-PHD.mp4        \
+     -c:v libx264      \
+     -b:a 128k          \
+     -hls_time 10      \
+     -hls_list_size 0      \
+     -hls_allow_cache 1      \
+     -hls_base_url http://127.0.0.1:8080/videos/5128k/       \
+     -hls_segment_filename /Users/fengkun/Movies/kuoxin/'TI2014_5128k_%05d.ts’      \
+      /Users/kuoxin/Movies/5128K/5128k_mp4.m3u8 
+
+
+有关FFmpeg编码效率，时间格式为：小时:分钟:秒
+                                  硬件A 硬件B 磁盘占用(MB)
+1780K（fps: 23, 1280x720 video）  1:31:18 1:00:58 1138.2
+编码过程中，CPU性能对其影响较大，硬件B比硬件A多了2个CPU，并且是至强服务器类型（由于使用云并不能保证独占该CPU） 
+
+
+##### win格式化mac启动盘（带efi）
+```bash
+cmd -> diskpart -> list disk -> sel disk 1 选择磁盘 -> clean 清楚所有数据
+磁盘管理工具 -> 选择的磁盘右键 -> 新建卷 -> 格式化
+```
+##### centos
+
+> 常用命令
+```bash
+系统内核信息
+cat /etc/redhat-release
+```
+
+```bash
+批量重命名 替换
+rename "s/fanli/debate/" * 把文件名中的fanli替换成debate
+```
+
+> 问题
+- yum命令不存在
+
+```bash
+http://mirrors.163.com/centos/7.4.1708/os/x86_64/Packages/
+安装对应自己的版本
+rpm -ivh  --nodeps http://mirrors.163.com/centos/5/os/x86_64/CentOS/yum-fastestmirror-1.1.16-14.el5.centos.1.noarch.rpm  
+rpm -ivh  --nodeps http://mirrors.163.com/centos/5/os/x86_64/CentOS/yum-metadata-parser-1.1.2-3.el5.centos.x86_64.rpm  
+rpm -ivh  --nodeps http://mirrors.163.com/centos/5/os/x86_64/CentOS/yum-3.2.22-26.el5.centos.noarch.rpm
+
+
+rpm -ivh jdk-1_5_0_07-linux-i586.rpm
+改成：
+rpm -ivh jdk-1_5_0_07-linux-i586.rpm --nodeps --force
+加上那两个参数的意义就在于，
+安装时不再分析包之间的依赖关系而直接安装，
+也就不会再提示error: Failed dependencies:这样的错误了。
+```
+
+> 安装VNC
+https://www.jianshu.com/p/cc33a72c5dda
+
+```bash
+先安装Xwindows
+yum update -y
+yum groupinstall "X Window System"
+yum install gnome-classic-session gnome-terminal nautilus-open-terminal control-center liberation-mono-fonts
+unlink /etc/systemd/system/default.target
+ln -sf /lib/systemd/system/graphical.target /etc/systemd/system/default.target
+
+重启系统
+reboot
+
+下面两行是为了能够让默认设置为桌面启动
+unlink /etc/systemd/system/default.target
+ln -sf /lib/systemd/system/runlevel5.target /etc/systemd/system/default.target
+
+VNC安装
+yum install -y tigervnc tigervnc-server
+
+设置登录密码
+vncpasswd
+
+修改配置信息
+/etc/systemd/system/
+
+把example的配置文件从/lib/systemd/system/vncserver@.service复制到里面
+cp /lib/systemd/system/vncserver@.service /etc/systemd/system/vncserver@:1.service
+然后打开这个配置文件/etc/systemd/system/vncserver@:1.service替换掉默认用户名
+
+这里我直接用root 用户登录，所以我替换成
+ExecStart=/sbin/runuser -l root -c "/usr/bin/vncserver %i"
+PIDFile=/root/.vnc/%H%i.pid
+
+第三步，重加载 systemd
+systemctl daemon-reload
+
+由于我这边的Centos 7 是用iptable防火墙的所以
+vim /etc/sysconfig/iptables
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 5900:5903 -j ACCEPT
+
+重启iptables
+service iptables restart
+```
+
+如果是用Centos 7 默认防火墙的可能需要
+```bash
+[root@zhan ~]# firewall-cmd --permanent --add-service vnc-server
+[root@zhan ~]# systemctl restart firewalld.service
+如果还是有问题可以试试关闭防火墙
+
+停止并禁用防火墙；
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+```
+
+如果报：
+Centos7 VNC报vncserver@:1.service:control process exited,code-exited status=98
+修改type为
+`type=simple`
+
+```bash
+设默认启动并开启VNC
+systemctl enable vncserver@:1.service
+systemctl start vncserver@:1.service
+
+cat ~/.vnc/xstartup 
+
+启动和关闭vnc
+vncserver :1 
+vncserver -kill :1
+```
+
+```bash
+VNC桌面乱码问题解决
+mkdir /usr/share/fonts/chinese
+cd /usr/share/fonts/chinese
+
+scp -C -i "~/Public/caoliao" * root@115.159.3.160:/usr/share/fonts/chinese
+Mac 默认字体存放位置 /System/Library/Fonts
+yum install mkfontscale
+yum install fontconfig
+
+mkfontscale
+mkfontdir
+fc-cache -fv
+
+重启系统或者source /etc/profile
+
+此时，使用
+fc-list :lang=zh
+即可看到安装的中文字体。
+
+为使系统所有用户都能使用该字体，需要给字体访问权限：
+
+chmod -R 755 *.tff
+chmod -R 755 *.TFF
+```
+
+> 更改yum源与更新系统
+http://www.cnblogs.com/lightnear/archive/2012/10/03/2710952.html
+
+http://mirrors.163.com/centos/7.4.1708/os/x86_64/
+```bash
+wget http://mirrors.163.com/centos/7.4.1708/os/x86_64/Packages/yum-3.4.3-154.el7.centos.noarch.rpm
+wget http://mirrors.163.com/centos/7.4.1708/os/x86_64/Packages/yum-metadata-parser-1.1.4-10.el7.x86_64.rpm
+wget http://mirrors.163.com/centos/7.4.1708/os/x86_64/Packages/yum-plugin-fastestmirror-1.1.31-42.el7.noarch.rpm
+rpm -ivh  --nodeps http://mirrors.163.com/centos/7.4.1708/os/x86_64/Packages/yum-plugin-fastestmirror-1.1.31-42.el7.noarch.rpm
+
+修改yum源
+进入yum配置文件目录：
+
+cd /etc/yum.repos.d/
+
+备份配置文件：
+mv CentOS-Base.repo CentOS-Base.repo.bak
+
+
+下载网易的配置：
+wget http://mirrors.163.com/.help/CentOS6-Base-163.repo
+下载下来的文件名为 CentOS6-Base-163.repo
+
+重命名：
+mv CentOS6-Base-163.repo CentOS-Base.repo
+
+更新：
+yum update
+```
+
+> 安装chrome
+- 方法1
+```bash
+1. 配置yum源
+
+在目录 /etc/yum.repos.d/ 下新建文件 google-chrome.repo
+
+cd /ect/yum.repos.d/
+vim google-chrome.repo
+1
+2
+写入如下内容:
+
+[google-chrome]
+name=google-chrome
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+```
+
+- 方法2
+```bash
+yum -y install google-chrome-stable
+
+Google官方源可能在中国无法使用，导致安装失败或者在国内无法更新，可以添加以下参数来安装：
+
+yum -y install google-chrome-stable --nogpgcheck
+
+运行chrome 
+找到chrome路径，并做个软连接，方便使用:
+
+which google-chrome-stable
+ln -s xxx /bin/chrome
+
+使用root用户启动chrome示例时会提示添加参数–no-sandbox flag
+
+chrome --no-sandbox flag
+```
+
+> 安装w3m
+
+```bash
+mv CentOS-Base.repo CentOS-Base.repo.bak
+vi CentOS-Base.repo
+# CentOS-Base.repo
+#
+# The mirror system uses the connecting IP address of the client and the
+# update status of each mirror to pick mirrors that are updated to and
+# geographically close to the client.  You should use this for CentOS updates
+# unless you are manually picking other mirrors.
+#
+# If the mirrorlist= does not work for you, as a fall back you can try the
+# remarked out baseurl= line instead.
+#
+#
+
+[base]
+name=CentOS-$releasever - Base
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
+#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
+
+#released updates
+[updates]
+name=CentOS-$releasever - Updates
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=updates
+#baseurl=http://mirror.centos.org/centos/$releasever/updates/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
+
+#additional packages that may be useful
+[extras]
+name=CentOS-$releasever - Extras
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=extras
+#baseurl=http://mirror.centos.org/centos/$releasever/extras/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
+
+#additional packages that extend functionality of existing packages
+[centosplus]
+name=CentOS-$releasever - Plus
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=centosplus
+#baseurl=http://mirror.centos.org/centos/$releasever/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
+
+#contrib - packages by Centos Users
+[contrib]
+name=CentOS-$releasever - Contrib
+mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=contrib
+#baseurl=http://mirror.centos.org/centos/$releasever/contrib/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-$releasever
+
+
+运行yum makecache生成缓存
+# yum makecache
+
+更新系统
+# yum -y update
+
+[root@server01 yum.repos.d]# sudo yum -y install curl-devel expat-devel gettext-devel openssl-devel zlib-devel gcc perl-ExtUtils-MakeMaker
+[root@server01 yum.repos.d]# sudo yum install w3m w3m-img
+```
+
+##### mongodb
+
+
+mongod端口占用无法启动（/data/db目录下存在mongod.lock）
+```bash
+netstat -an | grep mongo 或者 27017
+7b5eb0b89d968a57 stream      0      0 7b5eb0b892b19cd7                0                0                0 /tmp/mongodb-27017.sock
+上边记录说明端口被占用
+ps aux | grep mongod
+root              5448   0.0  0.1  4331728   6120   ??  S     3:20下午   0:00.12 sudo mongod
+sudo kill -9 5448
+
+修复
+sudo mongod --repair
+
+启动
+sudo mongod
+
+
+删除数据库
+show dbs
+use xxx
+show tables
+db.dropDatabase()
+```
+
+```bash
+访问格式
+"mongo_connection_uri": "mongodb://root:strapi@127.0.0.1:27017/doracms2",
+协议://账号:密码@ip:端口/数据库
+```
+
+> mac安装mongodb
+```bash
+https://www.mongodb.com/download-center/community
+下载，解压(tar -zxvf),重命名(mv mongdob-xxx mongodb),移动（cp -r /xxx /usr/local/）
+
+vi ~/.bash_profile 
+添加：echo 'export PATH="$PATH:/usr/local/mongodb/bin"' >> ~/.bash_profile
+source ~/.bash_profile
+
+sudo mkdir -p /data/db(mongodb默认使用这个路径作为数据库)
+
+终端1:sudo mongod(启动服务端) --auth(需要授权进入)
+终端2:mongo 登陆
+
+配置MongoDB 账号密码登录的步骤如下 (假设有 2 个数据库 admin (自带的) 和 strapi):
+
+1、启动 MongoDB: mongod
+
+2、进入数据库 admin: use admin
+
+3、创建用户 admin:
+
+db.createUser(
+  {
+    user: "admin",
+    pwd: "admin",
+    roles: [ { role: "userAdminAnyDatabase", db: "admin" }, "readWriteAnyDatabase" ]
+  }
+)
+4、进入数据库 strapi: use strapi
+
+5、创建用户 bar:
+
+db.createUser(
+  {
+    user: "root",
+    pwd: "strapi",
+    roles: [
+        { role: "dbAdmin", db: "strapi" },
+        { role: "readWrite", db: "strapi" }
+    ]
+  }
+)
+6、需要授权的方式启动: mongod --auth
+
+授权登录
+方式一: mongo 先进入然后 db.auth("bar", "bar") 授权
+方式二: mongo --port 27017 -u "root" -p "strapi" --authenticationDatabase "strapi"
+
+如果root需要admin权限
+use admin (切换admin数据库)
+db.createUser(
+  {
+    user: "root",
+    pwd: "strapi",
+    roles: [ { role: "userAdminAnyDatabase", db: "admin" }, "readWriteAnyDatabase" ]
+  }
+)
+
+
+用户没成功授权登陆fs.stats()不完整
+1.未登录时
+db.stats()
+{
+        "ok" : 0,
+        "errmsg" : "not authorized on admin to execute command { dbstats: 1.0, scale: undefined }",
+        "code" : 13,
+        "codeName" : "Unauthorized"
+}
+2.登陆成功
+{
+        "db" : "admin",
+        "collections" : 2,
+        "views" : 0,
+        "objects" : 3,
+        "avgObjSize" : 151,
+        "dataSize" : 453,
+        "storageSize" : 65536,
+        "numExtents" : 0,
+        "indexes" : 3,
+        "indexSize" : 81920,
+        "ok" : 1
+}
+```
+
+> linux 安装mongodb
+```bash
+https://www.mongodb.com/download-center#community
+http://www.runoob.com/mongodb/mongodb-linux-install.html
+
+su nginx
+
+wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.6.2.tgz
+tar -zxvf mongodb-linux-x86_64-3.6.2
+
+ln -s /opt/mongodb-linux-x86_64-3.6.2/bin/mongod /usr/local/bin/mongod
+
+
+vi bin/mongodb.conf
+
+systemLog:
+    destination: file
+    logAppend: true
+    path: /home/nginx/mongodb-logs/mongodb.logs
+
+storage:
+    dbPath: /home/nginx/mongodb-data
+    journal:
+        enabled: true
+
+processManagement:
+  fork: true
+  pidFilePath: /home/nginx/mongodb-pid/db.pid
+
+net:
+    port: 27017
+    bindIp: 0.0.0.0
+
+security:
+    authorization: enabled
+    javascriptEnabled: false
+
+logpath = /home/nginx/mongodb-logs/mongodb.logs
+logappend = true
+dbpath = /home/nginx/mongodb-data
+port = 27017
+fork = true
+pidfilepath = /home/nginx/mongodb-pid/db.pid
+
+dbpath=/home/nginx/mongodb-data
+logpath=/home/nginx/mongodb-logs/mongodb.logs
+pidfilepath=/home/nginx/mongodb-pid/db.pid
+directoryperdb=true
+logappend=true
+bind_ip=127.0.0.1
+port=27017
+oplogSize=1000
+fork=true
+noprealloc=true
+nojournal=true
+smallfiles=true
+
+
+
+
+mongodbchef mongod 连接不上解决方案
+mongod命令
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] MongoDB starting : pid=32575 port=27017 dbpath=/data/db 64-bit host=mail.caoliao.net.cn
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] db version v3.6.2
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] git version: 489d177dbd0f0420a8ca04d39fd78d0a2c539420
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] allocator: tcmalloc
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] modules: none
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] build environment:
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten]     distarch: x86_64
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten]     target_arch: x86_64
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] options: {}
+2018-05-02T19:49:24.903+0800 I STORAGE  [initandlisten] exception in initAndListen: NonExistentPath: Data directory /data/db not found., terminating
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] now exiting
+2018-05-02T19:49:24.903+0800 I CONTROL  [initandlisten] shutting down with code:100
+得出：port 27017 host mail.caoliao.net.cn
+新建连击ssh：
+auth mode：选择 private key
+选择~/Public/caoliao文件
+链接成功。
+
+
+
+vi ~/.bash_profile
+export PATH=/usr/local/mongodb-linux-x86_64-3.6.2/bin:$PATH
+source ~/.bash_profile
+
+
+mkdir mongodb-logs存储日志
+mkdir mongodb-data存储数据
+chown -R nginx:nginx mongodb-data操作权限赋给nginx组下nginx用户
+
+cd /etc/rc.d/init.d
+vi mongod
+
+#!/bin/bash
+#
+#chkconfig: 2345 80 90
+#description: mongod
+
+start() {
+    mongod -f /usr/local/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf
+}
+
+stop() {
+    mongod -f /usr/local/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf --shutdown
+}
+
+case "$1" in
+    start)
+    start
+;;
+    stop)
+    stop
+;;
+    restart)
+    stop
+    start
+;;
+
+*)
+echo $"Usage: $0 {start|stop|restart}"
+exit 1
+
+esac
+
+
+chmod +x /etc/rc.d/init.d/mongod
+
+增加服务并开机启动
+方法一：
+
+chkconfig --add mongod
+chkconfig --level 345 mongod on
+chkconfig --list mongod
+service mongod start
+
+
+方法二：
+
+vi bin/mongodb.conf
+
+dbpath=/usr/local/mongodb-data
+logpath=/usr/local/mongodb-logs/mongodb.logs
+pidfilepath=/usr/local/mongodb-pid/db.pid
+directoryperdb=true
+logappend=true
+bind_ip=127.0.0.1
+port=27017
+oplogSize=1000
+fork=true
+noprealloc=true
+nojournal=true
+smallfiles=true
+
+mongod -f /usr/local/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf
+
+
+执行修复命令：./mongod -f /usr/local/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf --repair
+
+
+暂时行不通，命令参数有问题
+vi /etc/rc.local
+/usr/local/mongodb-linux-x86_64-3.6.2/bin/mongod --dbpath "/home/nginx/mongodb-data" –logpath "/home/nginx/mongodb-logs/mongodb.logs" –logappend  --auth -–port=27017
+
+```
+
+```bash
+启动mongod
+su nginx
+mongod -f /opt/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf
+关闭
+mongod -f /opt/mongodb-linux-x86_64-3.6.2/bin/mongodb.conf --shutdown
+
+失败检查端口占用
+netstat -lanp | grep "27017" 
+/*聚合*/
+var depositsPipeline = [
+    {$group: {_id: "$u._id", earnPrice: {$sum: "$earnPrice"}}}
+];
+
+let deposits = CaoLiao.models.FanliPayment._db.model.aggregate(depositsPipeline)[0];
+
+//查询商品名称长度大于25个字符的商品
+db.item.find({"item_name": {"$exists": true, "$regex": /^.{25,}$/}}).limit(5)
+ 
+//查询商品名称长度小于5个字符的商品
+db.item.find({"item_name": {"$regex": /^.{0,5}$/}}).limit(5)
+
+/*distinct*/
+Meteor.wrapAsync(CaoLiao.models.Fanli._db.model.rawCollection().distinct, CaoLiao.models.Fanli._db.model.rawCollection())('category', {});
+```
+
+
+##### 安装openssl
+
+- RedHat Fedora 平台 
+`yum -y install openssl-devel `
+
+- Debian ,ubunu 平台 
+`apt-get install libssl-dev`
+
+
+> crypto是什么呢? 是OpenSSL 加密库(lib), 这个库需要openssl-devel包 ,在ubuntu中就是 libssl-dev 
+
+**mac只有一个openssl，没有libssl-dev**
+openssl可以直接使用
+要使用dev需要链接
+`export LDFLAGS="-L/usr/local/opt/openssl\@1.1/lib" 
+export CPPFLAGS="-I/usr/local/opt/openssl\@1.1/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
+`
+
+`brew info openssl有详细介绍`
+
+##### python
+
+```bash
+下载网盘资源
+cd /Volumes/ExFAT/movies/Movie/ 
+5282923882FF4FF4C694350FEDE8A9A2
+
+
+curl  -H "cookie:'BAIDUID=403E61EFC5271B76D0AFF6D6F10FD2D4:FG=1; PANWEB=1; PSTM=1522934889; BIDUPSID=AF4BA3B894349A2F27BA38480ABE591F; pan_login_way=1; t_pcnt=20180526-0; BDUSS=hreDJTMDZEWEZ0T2FlN1U3N2xuVHl3RWtsU3FpNTRwZU9uaXNqa05Nd0R2VFZiQVFBQUFBJCQAAAAAAAAAAAEAAAD48jsg0KbH5bfnMjAxMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMwDlsDMA5bQk; SCRC=b7effdd62e5ec5651f0a76e8de78e46f; STOKEN=97fb330125f027f9d6bd6dca083bd3ee511fd765c180c58ad8a109cde2f1add7; BDCLND=pkJ7TQdAVXHBjFm8kO5vtrjwUasGhse8sCDirYrF2GE%3D; BDRCVFR[feWj1Vr5u3D]=I67x6TjHwwYf0; PSINO=2; Hm_lvt_7a3960b6f067eb0085b7f96ff5e660b0=1528014290,1528187344,1528290301,1528773731; Hm_lvt_f5f83a6d8b15775a02760dc5f490bc47=1527771350,1528187352,1528290305,1528773748; cflag=15%3A3; pgv_pvi=9995394048; pgv_si=s2539960320; uc_login_unique=e402b3dad4b5fb6ba2c60dd2e6e86d63; uc_recom_mark=cmVjb21tYXJrXzY3NTYyNzE%3D; H_PS_PSSID=1434_26458_21085_26350_20928; FP_UID=51718615adfef3cda9d3d18018ffed4e; BAIDU_SSP_lcr=https://cn.bing.com/; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; Hm_lpvt_f5f83a6d8b15775a02760dc5f490bc47=1529208992; Hm_lpvt_7a3960b6f067eb0085b7f96ff5e660b0=1529209001; PANPSC=3222312385380566494%3AD6NVGkQPO1Xd0O4fbfKa3%2Bn90oj%2BY%2FIsocNuiwdGosTHjpzl1oHBmNIRsmMrVcXJ8Uyd79c9Zvr60Z3WTy%2B2V0GjJ2hy%2Bk9VQZfJ7nVMEcz5A7wPq9Hj7yz2PhdQts%2FXO2ryQgsJrhBLwLd1OaO3HfvqPIbe4OQ9iyFns5yFArX%2B1vGKrDpbLn22f22FudOmT772iTD5nWYs6w12ry6H6tTaC%2FN2Pd1a'" -H "Referer:https://pan.baidu.com/s/15zVLjeSvfoox5Vje5h4wpg" --data "encrypt=1&product=share&uk=3241953548&primaryid=1878628284&fid_list=[1020184628619087]" https://pan.baidu.com/api/sharedownload?sign=9e39320ddbf3c2e279c5414df8cfeac5be06ca18&timestamp=1529210509&channel=chunlei&web=1&app_id=250528&bdstoken=5c5c4d37e135983a50f73920e0867f27&logid=MTUyOTIwOTEwODc5MTAuOTI4MDg2OTUwNDI0NjM0MQ==&clienttype=0
+
+curl -H "cookie:'BAIDUID=403E61EFC5271B76D0AFF6D6F10FD2D4:FG=1; PANWEB=1; PSTM=1522934889; BIDUPSID=AF4BA3B894349A2F27BA38480ABE591F; pan_login_way=1; t_pcnt=20180526-0; BDUSS=hreDJTMDZEWEZ0T2FlN1U3N2xuVHl3RWtsU3FpNTRwZU9uaXNqa05Nd0R2VFZiQVFBQUFBJCQAAAAAAAAAAAEAAAD48jsg0KbH5bfnMjAxMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMwDlsDMA5bQk; SCRC=b7effdd62e5ec5651f0a76e8de78e46f; STOKEN=97fb330125f027f9d6bd6dca083bd3ee511fd765c180c58ad8a109cde2f1add7; BDCLND=pkJ7TQdAVXHBjFm8kO5vtrjwUasGhse8sCDirYrF2GE%3D; BDRCVFR[feWj1Vr5u3D]=I67x6TjHwwYf0; PSINO=2; Hm_lvt_7a3960b6f067eb0085b7f96ff5e660b0=1528014290,1528187344,1528290301,1528773731; Hm_lvt_f5f83a6d8b15775a02760dc5f490bc47=1527771350,1528187352,1528290305,1528773748; cflag=15%3A3; pgv_pvi=9995394048; pgv_si=s2539960320; uc_login_unique=e402b3dad4b5fb6ba2c60dd2e6e86d63; uc_recom_mark=cmVjb21tYXJrXzY3NTYyNzE%3D; H_PS_PSSID=1434_26458_21085_26350_20928; FP_UID=51718615adfef3cda9d3d18018ffed4e; BAIDU_SSP_lcr=https://cn.bing.com/; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; Hm_lpvt_f5f83a6d8b15775a02760dc5f490bc47=1529208992; Hm_lpvt_7a3960b6f067eb0085b7f96ff5e660b0=1529209001; PANPSC=3222312385380566494%3AD6NVGkQPO1Xd0O4fbfKa3%2Bn90oj%2BY%2FIsocNuiwdGosTHjpzl1oHBmNIRsmMrVcXJ8Uyd79c9Zvr60Z3WTy%2B2V0GjJ2hy%2Bk9VQZfJ7nVMEcz5A7wPq9Hj7yz2PhdQts%2FXO2ryQgsJrhBLwLd1OaO3HfvqPIbe4OQ9iyFns5yFArX%2B1vGKrDpbLn22f22FudOmT772iTD5nWYs6w12ry6H6tTaC%2FN2Pd1a'" -H "Referer:https://pan.baidu.com/s/15zVLjeSvfoox5Vje5h4wpg" --data 'browserId=9436efa061fe4a4fccfbba358d634bdc7bdb1172f1f4b359&downloadInfo={"method":"DownloadShareItems","uk":"4062492388","checkuser":false,"filelist":"opUqZIg7lhYdwOkxoUg0BQy0/Xq+yNZQXr+6AtAd8bJEODsSL2Y3NCoda5cvO5dN0Ga3uLz7WVEmKh2JP3YpYV18ZNGo1yGAQPFAkTgokJsU/rtIyiZcxAS8DUADJ2YPvbMQ9wCYFlfyE2BIfb/jsiNVe5mVxrQbFyXr7Tw/jaF7NAR7/C93boJmnOjQwbuneWUFm4GHN9PqbBcbwga/dfJvMNMsn+p0nCQyZKuH/tyjQYdpJQVTESqsnrKsAo3hxbE9vFlfqfgvZR1Ed1bqpleArHCJ2lul8kmUfYkza3JyxdNgCVK5X6zkqF4by56vHPz/gH7Si0hgIHuPsEYLrEiE/u2LsgbwKribnInb2xltYXUz2NOjJRXonvEN3k79GpzPjj5ex/kefU+bf/QQrbvtBjBtbBPKgLEVnZ2XtX/jHus9wtJvsbSgBOckvAFodizAfO++Ah7LKfYzKZsyibGpkpi5OKuI0jLQrbOyH1g7iUG6GurM4YbBJbIpIeqOEvAL+knQE2XC1YWWEHAuakAThI0iPBMd1/W0T2pbQHXvyD703CseQOhjGc6lQka4ihHHLVggaDPesza8+2/9vG9CPJrZ1H06if1BK+uc5ws68jbmsahgrMaGkuscfsJHAIv+LL5k1CTdK1mP9zzhY0P+9aY4vo9JPRSx7LH6TXBY2Tlfg/RRmoGgDYsh8K3xW3xjQnzRKORdm0BeUpVMdJB0m8ElxvvYBSBT02A9EXRz6UUMgSQFzUgvJ4++ED25eDS5MKDs4WMeDkhSt2GQ7CZh92s8TcnkWcbnu8iGSTbPlf3OrWfMUaHODgjeilrEkODAbG7GW+QvwbjJE+pR9T39Dh7w3nHW7o/DT4YZLuINpkYHVQTvDzMXumUbS2UjmYFlDRdhXF/68ZiW4ppbuPPsLublHVuOV9xzX4QtRX9sm5AUwKPKvs5oDGp67tR2okcILCi+3Hi1kNF8aoSkS04SKzeFTDMmpFQGj4EONQzF3vtjuX1cxGyXkMKI4OSAh+QXWE+dBx0PnuqyRKZysQ=="}'   https://pan.baidu.com/api/invoker/send?channel=chunlei&web=1&app_id=250528&bdstoken=5c5c4d37e135983a50f73920e0867f27&logid=MTUyOTIwOTEwOTAxMTAuMTk4MDIzNTc4NTMxMTA2Mg==&clienttype=0 
+
+baiduyunguanjia://evoked-download/?browserId=9436efa061fe4a4fccfbba358d634bdc7bdb1172f1f4b359&seq=15292096867121
+
+locale=zh; BAIDUID=403E61EFC5271B76D0AFF6D6F10FD2D4:FG=1; FP_UID=51718615adfef3cda9d3d18018ffed4e; BDUSS=hreDJTMDZEWEZ0T2FlN1U3N2xuVHl3RWtsU3FpNTRwZU9uaXNqa05Nd0R2VFZiQVFBQUFBJCQAAAAAAAAAAAEAAAD48jsg0KbH5bfnMjAxMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMwDlsDMA5bQk; pan_login_way=1; PANWEB=1; SCRC=b7effdd62e5ec5651f0a76e8de78e46f; STOKEN=97fb330125f027f9d6bd6dca083bd3ee511fd765c180c58ad8a109cde2f1add7; Hm_lvt_7a3960b6f067eb0085b7f96ff5e660b0=1528014290; cflag=15%3A3; pgv_pvi=9995394048; pgv_si=s2539960320; Hm_lpvt_7a3960b6f067eb0085b7f96ff5e660b0=1529206318; PANPSC=560739823580907806%3AD6NVGkQPO1Xd0O4fbfKa3%2Bn90oj%2BY%2FIsocNuiwdGosTHjpzl1oHBmNIRsmMrVcXJ8Uyd79c9Zvr60Z3WTy%2B2V%2Bbx185lZcNzQZfJ7nVMEcz5A7wPq9Hj7yz2PhdQts%2FXO2ryQgsJrhBLwLd1OaO3HfvqPIbe4OQ9iyFns5yFArX%2B1vGKrDpbLn22f22FudOmT772iTD5nWYs6w12ry6H6tTaC%2FN2Pd1a
+
+python /Volumes/ExFAT/projects/baidu/iScritpy/pan.baidu.com.py download "/影音/Movie/流感.rmvb"
+python /Volumes/ExFAT/projects/baidu/iScritpy/pan.baidu.com.py download "/ashan-p88om5yae/*"
+python /Volumes/ExFAT/projects/baidu/iScritpy/pan.baidu.com.py donwload "https://pan.baidu.com/s/15zVLjeSvfoox5Vje5h4wpg"
+
+
+python 同版本升级
+下载
+https://www.python.org/downloads/release/python-2714/
+source ~/.bash_profile
+
+pip升级
+https://pypi.org/simple/pip/
+sudo python setup.py install
+```
+
+##### nginx
+
+```bash
+nginx 安装
+
+yum install gcc-c++
+
+http://www.pcre.org/
+wget https://ftp.pcre.org/pub/pcre/pcre-8.41.tar.gz
+tar -zxvf 
+cd pcre
+./configure && make && make install
+
+http://zlib.net/
+wget http://zlib.net/zlib-1.2.11.tar.gz
+tar -zxvf 
+cd zlib
+./configure && make && make install
+
+https://www.openssl.org/
+wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
+tar -zxvf 
+cd open
+./config && make && make install
+
+wget http://nginx.org/download/nginx-1.13.8.tar.gz
+tar -zxvf nginx-1.13.8.tar.gz
+cd nginx-1.13.8
+
+（/usr/local 或者 /opt  opt专门存软件安装目录）
+./configure --prefix=/opt/nginx --sbin-path=/opt/nginx/nginx --conf-path=/opt/nginx/conf/nginx.conf --pid-path=/opt/nginx/nginx.pid --with-http_ssl_module --with-http_v2_module --with-pcre=/opt/pcre-8.41 --with-zlib=/opt/zlib-1.2.11 --with-openssl=/opt/openssl-1.1.0g --with-pcre --with-stream && make && make install
+
+以后要是需要新的模块，就需要重新configure & make & make install
+with-http_v2_module 添加http2模块
+
+ln -s /opt/nginx/nginx /usr/local/bin/nginx
+
+启动/nginx
+signal
+关闭nginx -s stop quit
+重启nginx -s reopen reload
+```
+
+**tengine原生nignx差距太大，不建议使用，使用意味着，大部分原声nginx操作不使用**
+
+
+##### hbase
+```bash
+brew install hbase
+
+配置
+设置JAVA_HOME
+cd /usr/local/Cellar/hbase/x.x.x/libexec/conf
+vim hbase-env.sh
+export JAVA_HOME="/usr/bin/java"
+设置HBase的核心配置
+vim hbase-site.xml
+<configuration>
+  <property>
+    <name>hbase.rootdir</name>
+    //这里设置让HBase存储文件的地方
+    <value>file:///Users/andrew_liu/Downloads/hbase</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    //这里设置让HBase存储内建zookeeper文件的地方
+    <value>/Users/andrew_liu/Downloads/zookeeper</value>
+  </property>
+</configuration>
+
+启动 hbase
+/usr/local/Cellar/hbase/x.x.x/bin/start-hbase.sh
+./start-hbase.sh
+
+
+启动HBase Shell
+./bin/hbase shell
+停止HBase运行
+./bin/stop-hbase.sh
+
+更多 hbase 操作
+https://www.bbsmax.com/A/x9J2OGQN56/
+```
+
+##### qcloud
+```bash
+创建密钥
+ssh-keygen -t rsa（密码类型） -f file(指定存储文件名)
+server .ssh/authorized_keys 存储pub内容
+client 
+
+SSH密钥
+caoliao
+
+
+chmod 400 meteor/caoliao
+ssh -i "~/Public/caoliao" root@115.159.3.160
+
+groupadd nginx
+useradd -g nginx nginx 指定创建nginx组下的nginx用户
+passwd nginx为nginx用户设置密码
+如果nginx要使用root密钥登陆
+在/home/nginx目录下创建.ssh文件夹
+cp /root/.ssh/authorized_keys /home/nginx/.ssh
+使用其他密钥的，将.pub文件内容复制到用户的.ssh/authorized_keys
+```
+
+##### 字体
+[阿里svg png ai](http://www.iconfont.cn/search/index?searchType=icon&q=alipay)
+
+svg转webfont
+icomoon.io
+
+font编辑器
+[需要先下载xQuartz](http://fontforge.github.io/en-US/downloads/mac-dl/)
+
